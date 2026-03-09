@@ -3,8 +3,9 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { XP_REWARDS, getLevel, type Difficulty } from "@/lib/xp";
+import type { GeneratedEpic } from "@/lib/types";
 
-export async function addQuest(formData: FormData) {
+export async function addTask(formData: FormData) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -20,77 +21,39 @@ export async function addQuest(formData: FormData) {
   const xpReward = XP_REWARDS[difficulty];
   if (!xpReward) throw new Error("Invalid difficulty");
 
-  await supabase.from("task_quest_quests").insert({
+  await supabase.from("task_quest_tasks").insert({
     user_id: user.id,
     title,
     description,
     difficulty,
     xp_reward: xpReward,
+    quest_id: null,
   });
 
   revalidatePath("/dashboard");
 }
 
-export async function createEpicWithQuests(
-  epics: {
-    epicName: string;
-    epicDescription: string;
-    quests: { title: string; description: string; difficulty: Difficulty }[];
-  }[]
-) {
+export async function completeTask(taskId: string) {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) throw new Error("Not authenticated");
 
-  for (const epic of epics) {
-    const { data: epicRow, error: epicErr } = await supabase
-      .from("task_quest_epics")
-      .insert({ user_id: user.id, name: epic.epicName, description: epic.epicDescription || null })
-      .select("id")
-      .single();
-
-    if (epicErr || !epicRow) throw new Error("Failed to create epic");
-
-    const questRows = epic.quests.map((q) => ({
-      user_id: user.id,
-      title: q.title,
-      description: q.description || null,
-      difficulty: q.difficulty,
-      xp_reward: XP_REWARDS[q.difficulty],
-      epic_id: epicRow.id,
-    }));
-
-    await supabase.from("task_quest_quests").insert(questRows);
-  }
-
-  revalidatePath("/dashboard");
-}
-
-export async function completeQuest(questId: string) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) throw new Error("Not authenticated");
-
-  // Get the quest
-  const { data: quest } = await supabase
-    .from("task_quest_quests")
+  const { data: task } = await supabase
+    .from("task_quest_tasks")
     .select("*")
-    .eq("id", questId)
+    .eq("id", taskId)
     .eq("user_id", user.id)
     .eq("status", "active")
     .single();
 
-  if (!quest) throw new Error("Quest not found");
+  if (!task) throw new Error("Task not found");
 
-  // Mark quest complete
   await supabase
-    .from("task_quest_quests")
+    .from("task_quest_tasks")
     .update({ status: "completed", completed_at: new Date().toISOString() })
-    .eq("id", questId);
+    .eq("id", taskId);
 
   // Get current profile
   const { data: profile } = await supabase
@@ -102,7 +65,7 @@ export async function completeQuest(questId: string) {
   if (!profile) throw new Error("Profile not found");
 
   // Calculate new XP and level
-  const newXp = profile.xp + quest.xp_reward;
+  const newXp = profile.xp + task.xp_reward;
   const newLevel = getLevel(newXp);
 
   // Calculate streak
@@ -132,28 +95,55 @@ export async function completeQuest(questId: string) {
     })
     .eq("id", user.id);
 
-  // Auto-complete epic if all its quests are done
-  if (quest.epic_id) {
-    const { data: epicQuests } = await supabase
-      .from("task_quest_quests")
+  // 2-level cascade: task → quest → epic
+  let questCompleted = false;
+  let epicCompleted = false;
+
+  if (task.quest_id) {
+    const { data: questTasks } = await supabase
+      .from("task_quest_tasks")
       .select("status")
-      .eq("epic_id", quest.epic_id)
+      .eq("quest_id", task.quest_id)
       .eq("user_id", user.id);
 
-    if (epicQuests && epicQuests.every((q) => q.status === "completed")) {
+    if (questTasks && questTasks.every((t) => t.status === "completed")) {
+      questCompleted = true;
       await supabase
-        .from("task_quest_epics")
+        .from("task_quest_quests")
         .update({ status: "completed" })
-        .eq("id", quest.epic_id);
+        .eq("id", task.quest_id);
+
+      // Check if all quests in the epic are done
+      const { data: quest } = await supabase
+        .from("task_quest_quests")
+        .select("epic_id")
+        .eq("id", task.quest_id)
+        .single();
+
+      if (quest?.epic_id) {
+        const { data: epicQuests } = await supabase
+          .from("task_quest_quests")
+          .select("status")
+          .eq("epic_id", quest.epic_id)
+          .eq("user_id", user.id);
+
+        if (epicQuests && epicQuests.every((q) => q.status === "completed")) {
+          epicCompleted = true;
+          await supabase
+            .from("task_quest_epics")
+            .update({ status: "completed" })
+            .eq("id", quest.epic_id);
+        }
+      }
     }
   }
 
   revalidatePath("/dashboard");
 
-  return { leveledUp: newLevel > profile.level, newLevel };
+  return { leveledUp: newLevel > profile.level, newLevel, questCompleted, epicCompleted };
 }
 
-export async function deleteQuest(questId: string) {
+export async function deleteTask(taskId: string) {
   const supabase = await createClient();
   const {
     data: { user },
@@ -161,9 +151,74 @@ export async function deleteQuest(questId: string) {
   if (!user) throw new Error("Not authenticated");
 
   await supabase
-    .from("task_quest_quests")
+    .from("task_quest_tasks")
     .delete()
-    .eq("id", questId)
+    .eq("id", taskId)
+    .eq("user_id", user.id);
+
+  revalidatePath("/dashboard");
+}
+
+export async function createEpicWithQuestsAndTasks(epic: GeneratedEpic) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: epicRow, error: epicErr } = await supabase
+    .from("task_quest_epics")
+    .insert({
+      user_id: user.id,
+      name: epic.name,
+      description: epic.description || null,
+    })
+    .select("id")
+    .single();
+
+  if (epicErr || !epicRow) throw new Error("Failed to create epic");
+
+  for (const quest of epic.quests) {
+    const { data: questRow, error: questErr } = await supabase
+      .from("task_quest_quests")
+      .insert({
+        user_id: user.id,
+        epic_id: epicRow.id,
+        name: quest.name,
+        description: quest.description || null,
+      })
+      .select("id")
+      .single();
+
+    if (questErr || !questRow) throw new Error("Failed to create quest");
+
+    const taskRows = quest.tasks.map((t) => ({
+      user_id: user.id,
+      quest_id: questRow.id,
+      title: t.title,
+      description: t.description || null,
+      difficulty: t.difficulty,
+      xp_reward: XP_REWARDS[t.difficulty],
+    }));
+
+    await supabase.from("task_quest_tasks").insert(taskRows);
+  }
+
+  revalidatePath("/dashboard");
+}
+
+export async function deleteEpic(epicId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // FK cascades will remove child quests and tasks
+  await supabase
+    .from("task_quest_epics")
+    .delete()
+    .eq("id", epicId)
     .eq("user_id", user.id);
 
   revalidatePath("/dashboard");

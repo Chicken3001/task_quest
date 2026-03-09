@@ -1,10 +1,10 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import { getLevelProgress } from "@/lib/xp";
-import type { Profile, Quest, Epic } from "@/lib/types";
-import { QuestList } from "./QuestList";
-import { AddQuestForm } from "./AddQuestForm";
-import { GenerateQuestChain } from "./GenerateQuestChain";
+import type { Profile, Epic, Quest, Task } from "@/lib/types";
+import { TaskList } from "./TaskList";
+import { AddTaskForm } from "./AddTaskForm";
+import { QuestPlanner } from "./QuestPlanner";
 import { EpicList } from "./EpicList";
 
 export default async function DashboardPage() {
@@ -23,13 +23,6 @@ export default async function DashboardPage() {
 
   if (!profile) redirect("/login");
 
-  const { data: quests } = await supabase
-    .from("task_quest_quests")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
-    .returns<Quest[]>();
-
   const { data: epics } = await supabase
     .from("task_quest_epics")
     .select("*")
@@ -37,18 +30,31 @@ export default async function DashboardPage() {
     .order("created_at", { ascending: false })
     .returns<Epic[]>();
 
-  const allQuests = quests ?? [];
+  const { data: quests } = await supabase
+    .from("task_quest_quests")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .returns<Quest[]>();
+
+  const { data: tasks } = await supabase
+    .from("task_quest_tasks")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .returns<Task[]>();
+
   const allEpics = epics ?? [];
+  const allQuests = quests ?? [];
+  const allTasks = tasks ?? [];
 
-  const standaloneActive = allQuests.filter((q) => q.status === "active" && !q.epic_id);
-  const standaloneCompleted = allQuests.filter((q) => q.status === "completed" && !q.epic_id);
+  const standaloneTasks = allTasks.filter((t) => !t.quest_id);
+  const standaloneActive = standaloneTasks.filter((t) => t.status === "active");
+  const standaloneCompleted = standaloneTasks.filter((t) => t.status === "completed");
 
-  // Legacy counts for stats bar
-  const activeQuests = allQuests.filter((q) => q.status === "active");
-  const completedQuests = allQuests.filter((q) => q.status === "completed");
-  const { level, currentLevelXp, nextLevelXp, progress } = getLevelProgress(
-    profile.xp
-  );
+  const activeTasks = allTasks.filter((t) => t.status === "active");
+  const completedTasks = allTasks.filter((t) => t.status === "completed");
+  const { level, nextLevelXp, progress } = getLevelProgress(profile.xp);
 
   return (
     <div className="space-y-6">
@@ -106,13 +112,13 @@ export default async function DashboardPage() {
           </p>
         </div>
 
-        {/* Quest stats */}
+        {/* Task stats */}
         <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-5">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-semibold text-violet-400">Quests</p>
+              <p className="text-sm font-semibold text-violet-400">Tasks</p>
               <p className="text-3xl font-black text-white">
-                {completedQuests.length}
+                {completedTasks.length}
                 <span className="ml-1 text-lg text-violet-400">done</span>
               </p>
             </div>
@@ -121,50 +127,50 @@ export default async function DashboardPage() {
             </div>
           </div>
           <p className="mt-3 text-xs font-medium text-violet-400">
-            {activeQuests.length} active
+            {activeTasks.length} active
           </p>
         </div>
       </div>
 
       {/* Actions row */}
       <div className="flex flex-wrap items-center gap-3">
-        <AddQuestForm />
-        <GenerateQuestChain />
+        <AddTaskForm />
+        <QuestPlanner />
       </div>
 
-      {/* Epics */}
+      {/* Epics (3-tier) */}
       {allEpics.length > 0 && (
         <div>
           <h2 className="mb-3 text-lg font-bold text-white">
             Epics ({allEpics.length})
           </h2>
-          <EpicList epics={allEpics} quests={allQuests} />
+          <EpicList epics={allEpics} quests={allQuests} tasks={allTasks} />
         </div>
       )}
 
-      {/* Standalone Active Quests */}
+      {/* Standalone Active Tasks */}
       <div>
         <h2 className="mb-3 text-lg font-bold text-white">
-          Active Quests ({standaloneActive.length})
+          Active Tasks ({standaloneActive.length})
         </h2>
         {standaloneActive.length === 0 && allEpics.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--card-border)] bg-[var(--card-bg)]/50 p-8 text-center">
             <p className="text-violet-400">
-              No active quests. Add one above or generate a quest chain!
+              No active tasks. Add one above or use the Quest Planner!
             </p>
           </div>
         ) : standaloneActive.length > 0 ? (
-          <QuestList quests={standaloneActive} type="active" />
+          <TaskList tasks={standaloneActive} type="active" />
         ) : null}
       </div>
 
-      {/* Standalone Completed Quests */}
+      {/* Standalone Completed Tasks */}
       {standaloneCompleted.length > 0 && (
         <div>
           <h2 className="mb-3 text-lg font-bold text-white">
             Completed ({standaloneCompleted.length})
           </h2>
-          <QuestList quests={standaloneCompleted} type="completed" />
+          <TaskList tasks={standaloneCompleted} type="completed" />
         </div>
       )}
     </div>
