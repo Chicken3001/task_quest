@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
 
 const SYSTEM_PROMPT = `You are a friendly project planning assistant. Your job is to have a short conversation to understand what the user wants to build, then signal when you have enough information to generate a structured project plan.
 
