@@ -2,7 +2,7 @@ import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
 const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent";
+  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
 
 const SYSTEM_PROMPT = `You are a project planning assistant. Break the user's project description into logical epics (groups of related work) and individual quests (tasks) within each epic.
 
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
   if (!geminiRes.ok) {
     const err = await geminiRes.text();
     console.error("Gemini error:", err);
-    return NextResponse.json({ error: "Gemini API error" }, { status: 502 });
+    return NextResponse.json({ error: "Failed to generate quest chain. Please try again." }, { status: 502 });
   }
 
   const geminiData = await geminiRes.json();
