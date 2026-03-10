@@ -40,12 +40,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: error.message }, { status: 400 });
   }
 
-  // Update profile with username (trigger auto-creates with null username)
+  // Upsert profile with username (trigger may or may not have created the row yet)
   if (data.user) {
     await supabase
       .from("task_quest_profiles")
-      .update({ username })
-      .eq("id", data.user.id);
+      .upsert({ id: data.user.id, username }, { onConflict: "id" });
   }
 
   return NextResponse.json({ success: true });
