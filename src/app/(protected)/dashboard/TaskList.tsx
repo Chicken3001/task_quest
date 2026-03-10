@@ -4,6 +4,7 @@ import { useState } from "react";
 import { completeTask, deleteTask } from "./actions";
 import { DIFFICULTY_COLORS, TIME_ESTIMATES } from "@/lib/xp";
 import type { Task } from "@/lib/types";
+import { TaskChatTooltip } from "./TaskChatTooltip";
 
 function TaskCard({
   task,
@@ -62,6 +63,13 @@ function TaskCard({
             >
               {task.difficulty}
             </span>
+            <TaskChatTooltip
+              context={{
+                taskTitle: task.title,
+                taskDescription: task.description,
+                difficulty: task.difficulty,
+              }}
+            />
           </div>
           {task.description && (
             <p className="mt-1 text-sm text-violet-400">{task.description}</p>

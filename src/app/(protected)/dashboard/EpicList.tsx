@@ -5,8 +5,15 @@ import type { Epic, Quest, Task } from "@/lib/types";
 import { DIFFICULTY_COLORS, TIME_ESTIMATES } from "@/lib/xp";
 import { completeTask, deleteTask, deleteEpic } from "./actions";
 import { PlanSummaryTooltip } from "./PlanSummaryTooltip";
+import { TaskChatTooltip } from "./TaskChatTooltip";
 
-function TaskRow({ task }: { task: Task }) {
+interface TaskRowContext {
+  questName?: string | null;
+  questDescription?: string | null;
+  planSummary?: string | null;
+}
+
+function TaskRow({ task, ctx }: { task: Task; ctx: TaskRowContext }) {
   const [completing, setCompleting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -44,6 +51,16 @@ function TaskRow({ task }: { task: Task }) {
           <span className={`inline-flex rounded-md border px-1.5 py-0.5 text-xs font-bold capitalize ${DIFFICULTY_COLORS[task.difficulty]}`}>
             {task.difficulty}
           </span>
+          <TaskChatTooltip
+            context={{
+              taskTitle: task.title,
+              taskDescription: task.description,
+              difficulty: task.difficulty,
+              questName: ctx.questName,
+              questDescription: ctx.questDescription,
+              planSummary: ctx.planSummary,
+            }}
+          />
         </div>
         {task.description && (
           <p className="mt-0.5 text-xs text-violet-400">{task.description}</p>
@@ -71,7 +88,7 @@ function TaskRow({ task }: { task: Task }) {
   );
 }
 
-function QuestSection({ quest, tasks }: { quest: Quest; tasks: Task[] }) {
+function QuestSection({ quest, tasks, planSummary }: { quest: Quest; tasks: Task[]; planSummary: string | null }) {
   const [collapsed, setCollapsed] = useState(false);
   const total = tasks.length;
   const done = tasks.filter((t) => t.status === "completed").length;
@@ -118,7 +135,15 @@ function QuestSection({ quest, tasks }: { quest: Quest; tasks: Task[] }) {
       {!collapsed && tasks.length > 0 && (
         <div className="border-t border-white/5 px-4 py-3 space-y-1.5">
           {tasks.map((task) => (
-            <TaskRow key={task.id} task={task} />
+            <TaskRow
+              key={task.id}
+              task={task}
+              ctx={{
+                questName: quest.name,
+                questDescription: quest.description,
+                planSummary,
+              }}
+            />
           ))}
         </div>
       )}
@@ -192,6 +217,7 @@ function EpicSection({
               key={quest.id}
               quest={quest}
               tasks={tasks.filter((t) => t.quest_id === quest.id)}
+              planSummary={epic.plan_summary}
             />
           ))}
         </div>
