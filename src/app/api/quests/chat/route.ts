@@ -1,8 +1,6 @@
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
-
-const GEMINI_URL =
-  "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
+import { GEMINI_URL } from "@/lib/gemini";
 
 const EPIC_CHAT_PROMPT = `You are a friendly project planning assistant. Your job is to have a short conversation to understand what the user wants to build, then signal when you have enough information to generate a structured project plan with multiple quests and tasks.
 
