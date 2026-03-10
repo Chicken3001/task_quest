@@ -10,7 +10,9 @@ function LoginForm() {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgot, setIsForgot] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -80,6 +82,27 @@ function LoginForm() {
     router.refresh();
   }
 
+  async function handleForgotPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+    setLoading(true);
+
+    const supabase = createClient();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/account`,
+    });
+
+    setLoading(false);
+
+    if (resetError) {
+      setError(resetError.message);
+      return;
+    }
+
+    setSuccess("Check your email for a password reset link.");
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center p-4">
       <div className="w-full max-w-sm">
@@ -92,19 +115,21 @@ function LoginForm() {
 
         <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6 shadow-lg">
           <h2 className="mb-1 text-xl font-bold text-white">
-            {isSignUp ? "Create Account" : "Welcome Back"}
+            {isForgot ? "Reset Password" : isSignUp ? "Create Account" : "Welcome Back"}
           </h2>
           <p className="mb-5 text-sm text-violet-400">
-            {isSignUp
-              ? "Start your quest adventure"
-              : "Continue your quest"}
+            {isForgot
+              ? "We'll send you a reset link"
+              : isSignUp
+                ? "Start your quest adventure"
+                : "Continue your quest"}
           </p>
 
           <form
-            onSubmit={isSignUp ? handleSignUp : handleLogin}
+            onSubmit={isForgot ? handleForgotPassword : isSignUp ? handleSignUp : handleLogin}
             className="flex flex-col gap-3"
           >
-            {isSignUp && (
+            {isSignUp && !isForgot && (
               <input
                 type="text"
                 placeholder="Username"
@@ -125,20 +150,28 @@ function LoginForm() {
               autoComplete="email"
               className="rounded-xl border border-[var(--card-border)] bg-white/5 px-4 py-2.5 text-white placeholder-violet-400/50 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
             />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-              minLength={6}
-              autoComplete={isSignUp ? "new-password" : "current-password"}
-              className="rounded-xl border border-[var(--card-border)] bg-white/5 px-4 py-2.5 text-white placeholder-violet-400/50 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
-            />
+            {!isForgot && (
+              <input
+                type="password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                minLength={6}
+                autoComplete={isSignUp ? "new-password" : "current-password"}
+                className="rounded-xl border border-[var(--card-border)] bg-white/5 px-4 py-2.5 text-white placeholder-violet-400/50 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+              />
+            )}
 
             {error && (
               <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2">
                 <p className="text-sm font-medium text-red-400">{error}</p>
+              </div>
+            )}
+
+            {success && (
+              <div className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2">
+                <p className="text-sm font-medium text-emerald-400">{success}</p>
               </div>
             )}
 
@@ -149,25 +182,46 @@ function LoginForm() {
             >
               {loading
                 ? "Loading..."
-                : isSignUp
-                  ? "Create Account"
-                  : "Sign In"}
+                : isForgot
+                  ? "Send Reset Link"
+                  : isSignUp
+                    ? "Create Account"
+                    : "Sign In"}
             </button>
           </form>
 
-          <p className="mt-4 text-center text-sm text-violet-400">
-            {isSignUp ? "Already have an account?" : "Need an account?"}{" "}
-            <button
-              type="button"
-              onClick={() => {
-                setIsSignUp(!isSignUp);
-                setError(null);
-              }}
-              className="font-semibold text-violet-300 hover:text-white"
-            >
-              {isSignUp ? "Sign In" : "Sign Up"}
-            </button>
-          </p>
+          {!isForgot && (
+            <p className="mt-4 text-center text-sm text-violet-400">
+              {isSignUp ? "Already have an account?" : "Need an account?"}{" "}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsSignUp(!isSignUp);
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="font-semibold text-violet-300 hover:text-white"
+              >
+                {isSignUp ? "Sign In" : "Sign Up"}
+              </button>
+            </p>
+          )}
+
+          {!isSignUp && (
+            <p className={`${isForgot ? "mt-4" : "mt-2"} text-center text-sm text-violet-400`}>
+              <button
+                type="button"
+                onClick={() => {
+                  setIsForgot(!isForgot);
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="font-semibold text-violet-300 hover:text-white"
+              >
+                {isForgot ? "Back to Sign In" : "Forgot password?"}
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>

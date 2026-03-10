@@ -47,9 +47,12 @@ export default async function ProtectedLayout({
               Leaderboard
             </Link>
             {profile?.username && (
-              <span className="hidden rounded-full bg-violet-500/20 px-3 py-1 text-sm font-bold text-violet-300 sm:block">
+              <Link
+                href="/account"
+                className="hidden rounded-full bg-violet-500/20 px-3 py-1 text-sm font-bold text-violet-300 transition-colors hover:bg-violet-500/30 hover:text-white sm:block"
+              >
                 {profile.username}
-              </span>
+              </Link>
             )}
             <form action="/api/auth/signout" method="post">
               <button className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-violet-300 transition-colors hover:bg-white/20 hover:text-white">
