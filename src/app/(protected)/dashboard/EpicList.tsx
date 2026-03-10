@@ -16,6 +16,7 @@ interface TaskRowContext {
 function TaskRow({ task, ctx }: { task: Task; ctx: TaskRowContext }) {
   const [completing, setCompleting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function handleComplete() {
     setCompleting(true);
@@ -78,12 +79,29 @@ function TaskRow({ task, ctx }: { task: Task; ctx: TaskRowContext }) {
           {completing ? "..." : "Done"}
         </button>
       )}
-      <button
-        onClick={() => { if (window.confirm("Delete this task?")) deleteTask(task.id); }}
-        className="shrink-0 rounded-md bg-white/10 px-2 py-1 text-xs font-semibold text-violet-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
-      >
-        &#x2715;
-      </button>
+      {!confirmDelete ? (
+        <button
+          onClick={() => setConfirmDelete(true)}
+          className="shrink-0 rounded-md bg-white/10 px-2 py-1 text-xs font-semibold text-violet-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
+        >
+          &#x2715;
+        </button>
+      ) : (
+        <div className="flex shrink-0 items-center gap-1">
+          <button
+            onClick={() => deleteTask(task.id)}
+            className="rounded-md bg-red-500/20 px-2 py-1 text-xs font-bold text-red-400 transition-colors hover:bg-red-500/30"
+          >
+            Delete
+          </button>
+          <button
+            onClick={() => setConfirmDelete(false)}
+            className="rounded-md bg-white/10 px-2 py-1 text-xs font-semibold text-violet-400 transition-colors hover:bg-white/15"
+          >
+            Cancel
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -161,6 +179,7 @@ function EpicSection({
   tasks: Task[];
 }) {
   const [collapsed, setCollapsed] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter((t) => t.status === "completed").length;
   const progress = totalTasks === 0 ? 0 : doneTasks / totalTasks;
@@ -224,13 +243,31 @@ function EpicSection({
       )}
 
       {!collapsed && (
-        <div className="border-t border-[var(--card-border)] px-4 py-2">
-          <button
-            onClick={() => { if (window.confirm("Delete this epic? All quests and tasks in it will also be deleted.")) deleteEpic(epic.id); }}
-            className="text-xs font-semibold text-violet-500 transition-colors hover:text-red-400"
-          >
-            Delete Epic
-          </button>
+        <div className="border-t border-[var(--card-border)] px-4 py-2 flex items-center gap-2">
+          {!confirmDelete ? (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="text-xs font-semibold text-violet-500 transition-colors hover:text-red-400"
+            >
+              Delete Epic
+            </button>
+          ) : (
+            <>
+              <span className="text-xs text-red-400">Delete this epic and all its quests/tasks?</span>
+              <button
+                onClick={() => deleteEpic(epic.id)}
+                className="rounded-md bg-red-500/20 px-2 py-1 text-xs font-bold text-red-400 transition-colors hover:bg-red-500/30"
+              >
+                Yes, delete
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="rounded-md bg-white/10 px-2 py-1 text-xs font-semibold text-violet-400 transition-colors hover:bg-white/15"
+              >
+                Cancel
+              </button>
+            </>
+          )}
         </div>
       )}
     </div>

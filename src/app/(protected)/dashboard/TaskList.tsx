@@ -15,6 +15,7 @@ function TaskCard({
 }) {
   const [completing, setCompleting] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   async function handleComplete() {
     setCompleting(true);
@@ -86,12 +87,29 @@ function TaskCard({
               {completing ? "..." : "Complete"}
             </button>
           )}
-          <button
-            onClick={() => { if (window.confirm("Delete this task?")) deleteTask(task.id); }}
-            className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-violet-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
-          >
-            &#x2715;
-          </button>
+          {!confirmDelete ? (
+            <button
+              onClick={() => setConfirmDelete(true)}
+              className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-violet-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
+            >
+              &#x2715;
+            </button>
+          ) : (
+            <div className="flex items-center gap-1">
+              <button
+                onClick={() => deleteTask(task.id)}
+                className="rounded-lg bg-red-500/20 px-2.5 py-1.5 text-xs font-bold text-red-400 transition-colors hover:bg-red-500/30"
+              >
+                Delete
+              </button>
+              <button
+                onClick={() => setConfirmDelete(false)}
+                className="rounded-lg bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-violet-400 transition-colors hover:bg-white/15"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>
