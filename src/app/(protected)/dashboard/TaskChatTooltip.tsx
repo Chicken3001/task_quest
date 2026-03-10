@@ -113,7 +113,8 @@ export function TaskChatTooltip({
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed");
 
-      setNotes(data.message);
+      const newNotes = notes ? notes + "\n\n" + data.message : data.message;
+      setNotes(newNotes);
       setSummarizing(false);
       setEditingNotes(true);
     } catch {
