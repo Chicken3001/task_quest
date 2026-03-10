@@ -36,6 +36,7 @@ export function TaskChatTooltip({
   const [savingNotes, setSavingNotes] = useState(false);
   const [summarizing, setSummarizing] = useState(false);
   const [showNotesTooltip, setShowNotesTooltip] = useState(false);
+  const [compacting, setCompacting] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
@@ -122,6 +123,33 @@ export function TaskChatTooltip({
     }
   }
 
+  async function handleCompactNotes() {
+    setCompacting(true);
+    try {
+      const res = await fetch("/api/quests/task-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            {
+              role: "user",
+              content: `Here are my accumulated notes:\n\n${notes}\n\nCondense these notes into a shorter version. Merge duplicates, remove redundancy, and keep only the most important actionable information. Use concise bullet points. Do not include any preamble.`,
+            },
+          ],
+          context,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+
+      setNotes(data.message);
+      setCompacting(false);
+      setEditingNotes(true);
+    } catch {
+      setCompacting(false);
+    }
+  }
+
   async function handleSaveEditedNotes() {
     setSavingNotes(true);
     try {
@@ -170,14 +198,25 @@ export function TaskChatTooltip({
           <div className="border-b border-[var(--card-border)] px-6 py-3">
             <div className="flex items-center justify-between mb-1">
               <p className="text-xs font-bold text-violet-400">Saved Notes</p>
-              <button
-                onClick={() => setEditingNotes(true)}
-                className="text-xs font-semibold text-violet-500 transition-colors hover:text-violet-300"
-              >
-                Edit
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={handleCompactNotes}
+                  disabled={compacting}
+                  className="text-xs font-semibold text-amber-500 transition-colors hover:text-amber-300 disabled:opacity-50"
+                >
+                  {compacting ? "Compacting..." : "Compact"}
+                </button>
+                <button
+                  onClick={() => setEditingNotes(true)}
+                  className="text-xs font-semibold text-violet-500 transition-colors hover:text-violet-300"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
-            <p className="text-sm text-violet-200 whitespace-pre-wrap">{notes}</p>
+            <div className="max-h-32 overflow-y-auto">
+              <p className="text-sm text-violet-200 whitespace-pre-wrap">{notes}</p>
+            </div>
           </div>
         )}
 
