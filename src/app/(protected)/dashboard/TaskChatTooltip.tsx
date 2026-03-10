@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 
 interface TaskContext {
@@ -22,58 +22,8 @@ export function TaskChatTooltip({ context }: { context: TaskContext }) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
-  const [position, setPosition] = useState<{ top: number; left: number; maxHeight: number } | null>(null);
-  const buttonRef = useRef<HTMLButtonElement>(null);
-  const panelRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
-
-  const updatePosition = useCallback(() => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    const panelWidth = 320;
-    const panelMaxHeight = 360;
-    const gap = 8;
-
-    let left = rect.right - panelWidth;
-    if (left < gap) left = gap;
-    if (left + panelWidth > window.innerWidth - gap) left = window.innerWidth - panelWidth - gap;
-
-    const spaceBelow = window.innerHeight - rect.bottom - gap;
-    const spaceAbove = rect.top - gap;
-
-    let top: number;
-    let maxHeight: number;
-
-    if (spaceBelow >= panelMaxHeight || spaceBelow >= spaceAbove) {
-      // Place below
-      top = rect.bottom + gap;
-      maxHeight = Math.min(panelMaxHeight, spaceBelow);
-    } else {
-      // Place above
-      maxHeight = Math.min(panelMaxHeight, spaceAbove);
-      top = rect.top - gap - maxHeight;
-    }
-
-    setPosition({ top, left, maxHeight });
-  }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    updatePosition();
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        panelRef.current &&
-        !panelRef.current.contains(e.target as Node) &&
-        buttonRef.current &&
-        !buttonRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open, updatePosition]);
 
   useEffect(() => {
     if (open) {
@@ -121,87 +71,90 @@ export function TaskChatTooltip({ context }: { context: TaskContext }) {
     }
   }
 
-  const panel = open && position && createPortal(
-    <div
-      ref={panelRef}
-      className="fixed z-[100] flex w-80 flex-col rounded-xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-xl"
-      style={{ top: position.top, left: position.left, maxHeight: position.maxHeight }}
-      onMouseDown={(e) => e.stopPropagation()}
-      onClick={(e) => e.stopPropagation()}
-    >
-      {/* Header */}
-      <div className="flex-shrink-0 border-b border-[var(--card-border)] px-3 py-2 flex items-center justify-between">
-        <p className="text-xs font-bold text-violet-400 truncate flex-1">
-          Ask about: {context.taskTitle}
-        </p>
-        <button
-          type="button"
-          onClick={() => setOpen(false)}
-          className="ml-2 text-xs text-violet-500 hover:text-violet-300"
-        >
-          &#x2715;
-        </button>
-      </div>
+  const modal = open && createPortal(
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
-      {/* Messages */}
-      <div className="flex-1 min-h-0 overflow-y-auto px-3 py-2 space-y-2">
-        {messages.length === 0 && (
-          <p className="text-xs text-violet-500 text-center py-4">
-            Ask a question about this task
-          </p>
-        )}
-        {messages.map((msg, i) => (
-          <div
-            key={i}
-            className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
-          >
-            <div
-              className={`max-w-[85%] rounded-xl px-3 py-2 text-xs ${
-                msg.role === "user"
-                  ? "bg-violet-600/30 text-white"
-                  : "bg-white/5 text-violet-100"
-              }`}
+      <div className="relative flex w-full max-w-2xl flex-col max-h-[85vh] rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-2xl">
+        {/* Header */}
+        <div className="flex-shrink-0 border-b border-[var(--card-border)] px-6 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-black text-white">Task Assistant</h2>
+              <p className="text-sm text-violet-400">
+                Ask about: {context.taskTitle}
+              </p>
+            </div>
+            <button
+              onClick={() => setOpen(false)}
+              className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-violet-400 hover:bg-red-500/20 hover:text-red-400"
             >
-              {msg.content}
-            </div>
+              &#x2715;
+            </button>
           </div>
-        ))}
-        {sending && (
-          <div className="flex justify-start">
-            <div className="flex items-center gap-1 rounded-xl bg-white/5 px-3 py-2">
-              <span className="typing-dot" style={{ width: 5, height: 5 }} />
-              <span className="typing-dot" style={{ width: 5, height: 5, animationDelay: "0.2s" }} />
-              <span className="typing-dot" style={{ width: 5, height: 5, animationDelay: "0.4s" }} />
-            </div>
-          </div>
-        )}
-        <div ref={chatEndRef} />
-      </div>
+        </div>
 
-      {/* Input */}
-      <div className="flex-shrink-0 border-t border-[var(--card-border)] p-2">
-        <div className="flex gap-1.5">
-          <input
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") {
-                e.preventDefault();
-                handleSend();
-              }
-            }}
-            placeholder="Ask a question..."
-            className="flex-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1.5 text-xs text-white placeholder-violet-500 outline-none focus:border-violet-500"
-          />
-          <button
-            type="button"
-            onClick={handleSend}
-            disabled={sending || !input.trim()}
-            className="rounded-lg bg-violet-600 px-2.5 py-1.5 text-xs font-bold text-white transition-all hover:bg-violet-500 disabled:opacity-50"
-          >
-            Send
-          </button>
+        {/* Messages */}
+        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
+          {messages.length === 0 && (
+            <p className="text-sm text-violet-500 text-center py-8">
+              Ask a question about this task
+            </p>
+          )}
+          {messages.map((msg, i) => (
+            <div
+              key={i}
+              className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}
+            >
+              <div
+                className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
+                  msg.role === "user"
+                    ? "bg-violet-600/30 text-white"
+                    : "bg-white/5 text-violet-100"
+                }`}
+              >
+                {msg.content}
+              </div>
+            </div>
+          ))}
+          {sending && (
+            <div className="flex justify-start">
+              <div className="flex items-center gap-1.5 rounded-2xl bg-white/5 px-4 py-3">
+                <span className="typing-dot" />
+                <span className="typing-dot" style={{ animationDelay: "0.2s" }} />
+                <span className="typing-dot" style={{ animationDelay: "0.4s" }} />
+              </div>
+            </div>
+          )}
+          <div ref={chatEndRef} />
+        </div>
+
+        {/* Input */}
+        <div className="flex-shrink-0 border-t border-[var(--card-border)] px-6 py-4">
+          <div className="flex gap-2">
+            <textarea
+              ref={inputRef}
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
+              placeholder="Ask a question..."
+              rows={1}
+              className="flex-1 resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-violet-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+            />
+            <button
+              type="button"
+              onClick={handleSend}
+              disabled={sending || !input.trim()}
+              className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:opacity-50"
+            >
+              Send
+            </button>
+          </div>
         </div>
       </div>
     </div>,
@@ -211,7 +164,6 @@ export function TaskChatTooltip({ context }: { context: TaskContext }) {
   return (
     <>
       <button
-        ref={buttonRef}
         type="button"
         onClick={(e) => {
           e.stopPropagation();
@@ -225,7 +177,7 @@ export function TaskChatTooltip({ context }: { context: TaskContext }) {
           <path d="M8 1C4.13 1 1 3.58 1 6.75c0 1.77 1.03 3.36 2.66 4.42L3 15l3.38-1.93C6.9 13.18 7.44 13.25 8 13.25c3.87 0 7-2.58 7-5.75S11.87 1 8 1z" />
         </svg>
       </button>
-      {panel}
+      {modal}
     </>
   );
 }
