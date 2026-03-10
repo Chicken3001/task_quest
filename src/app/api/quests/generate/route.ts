@@ -20,12 +20,14 @@ Rules:
   - medium: 1-3 hours, moderate complexity
   - hard: half day or more, significant effort
   - epic: multi-day or highly complex milestone
+- Include a "plan_summary" field: a concise 2-4 sentence summary of what was discussed and decided during the planning conversation. This is saved for the user's future reference.
 
 Return ONLY valid JSON matching this exact schema:
 {
   "epic": {
     "name": "string (1-2 words)",
     "description": "string",
+    "plan_summary": "string (2-4 sentence summary of the planning conversation)",
     "quests": [
       {
         "name": "string",
@@ -55,12 +57,14 @@ Rules:
   - medium: 1-3 hours, moderate complexity
   - hard: half day or more, significant effort
   - epic: multi-day or highly complex milestone
+- Include a "plan_summary" field: a concise 2-4 sentence summary of what was discussed and decided during the planning conversation. This is saved for the user's future reference.
 
 Return ONLY valid JSON matching this exact schema:
 {
   "quest": {
     "name": "string",
     "description": "string",
+    "plan_summary": "string (2-4 sentence summary of the planning conversation)",
     "tasks": [
       {
         "title": "string",

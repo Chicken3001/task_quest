@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Quest, Task } from "@/lib/types";
 import { DIFFICULTY_COLORS, TIME_ESTIMATES } from "@/lib/xp";
 import { completeTask, deleteTask, deleteQuest } from "./actions";
+import { PlanSummaryTooltip } from "./PlanSummaryTooltip";
 
 function TaskRow({ task }: { task: Task }) {
   const [completing, setCompleting] = useState(false);
@@ -92,6 +93,7 @@ function QuestSection({ quest, tasks }: { quest: Quest; tasks: Task[] }) {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-base font-bold text-white">{quest.name}</span>
+              {quest.plan_summary && <PlanSummaryTooltip summary={quest.plan_summary} />}
               {isComplete && (
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-400">
                   Complete

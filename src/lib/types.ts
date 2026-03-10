@@ -14,6 +14,7 @@ export interface Epic {
   user_id: string;
   name: string;
   description: string | null;
+  plan_summary: string | null;
   status: "active" | "completed";
   created_at: string;
 }
@@ -24,6 +25,7 @@ export interface Quest {
   epic_id: string | null;
   name: string;
   description: string | null;
+  plan_summary: string | null;
   status: "active" | "completed";
   created_at: string;
 }
@@ -62,11 +64,13 @@ export interface GeneratedTask {
 export interface GeneratedQuest {
   name: string;
   description: string;
+  plan_summary?: string;
   tasks: GeneratedTask[];
 }
 
 export interface GeneratedEpic {
   name: string;
   description: string;
+  plan_summary?: string;
   quests: GeneratedQuest[];
 }

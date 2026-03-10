@@ -174,6 +174,7 @@ export async function createQuestWithTasks(quest: GeneratedQuest) {
       epic_id: null,
       name: quest.name,
       description: quest.description || null,
+      plan_summary: quest.plan_summary || null,
     })
     .select("id")
     .single();
@@ -224,6 +225,7 @@ export async function createEpicWithQuestsAndTasks(epic: GeneratedEpic) {
       user_id: user.id,
       name: epic.name,
       description: epic.description || null,
+      plan_summary: epic.plan_summary || null,
     })
     .select("id")
     .single();

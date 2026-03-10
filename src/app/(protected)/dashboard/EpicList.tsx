@@ -4,6 +4,7 @@ import { useState } from "react";
 import type { Epic, Quest, Task } from "@/lib/types";
 import { DIFFICULTY_COLORS, TIME_ESTIMATES } from "@/lib/xp";
 import { completeTask, deleteTask, deleteEpic } from "./actions";
+import { PlanSummaryTooltip } from "./PlanSummaryTooltip";
 
 function TaskRow({ task }: { task: Task }) {
   const [completing, setCompleting] = useState(false);
@@ -154,6 +155,7 @@ function EpicSection({
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <span className="text-base font-bold text-white">{epic.name}</span>
+              {epic.plan_summary && <PlanSummaryTooltip summary={epic.plan_summary} />}
               {isComplete && (
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-400">
                   Complete
