@@ -37,6 +37,7 @@ export function TaskChatTooltip({
   const [summarizing, setSummarizing] = useState(false);
   const [showNotesTooltip, setShowNotesTooltip] = useState(false);
   const [compacting, setCompacting] = useState(false);
+  const [notesExpanded, setNotesExpanded] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
@@ -195,28 +196,41 @@ export function TaskChatTooltip({
 
         {/* Saved notes display */}
         {notes && !editingNotes && (
-          <div className="border-b border-[var(--card-border)] px-6 py-3">
-            <div className="flex items-center justify-between mb-1">
-              <p className="text-xs font-bold text-violet-400">Saved Notes</p>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={handleCompactNotes}
-                  disabled={compacting}
-                  className="text-xs font-semibold text-amber-500 transition-colors hover:text-amber-300 disabled:opacity-50"
-                >
-                  {compacting ? "Compacting..." : "Compact"}
-                </button>
-                <button
-                  onClick={() => setEditingNotes(true)}
-                  className="text-xs font-semibold text-violet-500 transition-colors hover:text-violet-300"
-                >
-                  Edit
-                </button>
+          <div className="border-b border-[var(--card-border)]">
+            <button
+              onClick={() => setNotesExpanded((e) => !e)}
+              className="flex w-full items-center gap-2 px-6 py-2 text-left transition-colors hover:bg-white/5"
+            >
+              <span className="text-xs text-violet-500">{notesExpanded ? "▼" : "▶"}</span>
+              <span className="text-xs font-bold text-violet-400">Notes</span>
+              {!notesExpanded && (
+                <span className="min-w-0 flex-1 truncate text-xs text-violet-500">
+                  {notes.split("\n")[0]}
+                </span>
+              )}
+            </button>
+            {notesExpanded && (
+              <div className="px-6 pb-3">
+                <div className="max-h-40 overflow-y-auto">
+                  <p className="text-sm text-violet-200 whitespace-pre-wrap">{notes}</p>
+                </div>
+                <div className="mt-2 flex items-center gap-2 justify-end">
+                  <button
+                    onClick={handleCompactNotes}
+                    disabled={compacting}
+                    className="text-xs font-semibold text-amber-500 transition-colors hover:text-amber-300 disabled:opacity-50"
+                  >
+                    {compacting ? "Compacting..." : "Compact"}
+                  </button>
+                  <button
+                    onClick={() => setEditingNotes(true)}
+                    className="text-xs font-semibold text-violet-500 transition-colors hover:text-violet-300"
+                  >
+                    Edit
+                  </button>
+                </div>
               </div>
-            </div>
-            <div className="max-h-32 overflow-y-auto">
-              <p className="text-sm text-violet-200 whitespace-pre-wrap">{notes}</p>
-            </div>
+            )}
           </div>
         )}
 
