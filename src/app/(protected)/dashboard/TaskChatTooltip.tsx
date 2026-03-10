@@ -145,12 +145,22 @@ export function TaskChatTooltip({
                 Ask about: {context.taskTitle}
               </p>
             </div>
-            <button
-              onClick={() => setOpen(false)}
-              className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-violet-400 hover:bg-red-500/20 hover:text-red-400"
-            >
-              &#x2715;
-            </button>
+            <div className="flex items-center gap-2">
+              {messages.length > 0 && (
+                <button
+                  onClick={() => setMessages([])}
+                  className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-violet-400 transition-colors hover:bg-violet-500/20 hover:text-violet-300"
+                >
+                  New Chat
+                </button>
+              )}
+              <button
+                onClick={() => setOpen(false)}
+                className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-violet-400 hover:bg-red-500/20 hover:text-red-400"
+              >
+                &#x2715;
+              </button>
+            </div>
           </div>
         </div>
 
