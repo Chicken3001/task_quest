@@ -80,7 +80,7 @@ function TaskRow({ task, ctx }: { task: Task; ctx: TaskRowContext }) {
         </button>
       )}
       <button
-        onClick={() => deleteTask(task.id)}
+        onClick={() => { if (window.confirm("Delete this task?")) deleteTask(task.id); }}
         className="shrink-0 rounded-md bg-white/10 px-2 py-1 text-xs font-semibold text-violet-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
       >
         &#x2715;
@@ -159,7 +159,7 @@ function QuestSection({ quest, tasks }: { quest: Quest; tasks: Task[] }) {
       {!collapsed && (
         <div className="border-t border-[var(--card-border)] px-4 py-2">
           <button
-            onClick={() => deleteQuest(quest.id)}
+            onClick={() => { if (window.confirm("Delete this quest? All tasks in it will also be deleted.")) deleteQuest(quest.id); }}
             className="text-xs font-semibold text-violet-500 transition-colors hover:text-red-400"
           >
             Delete Quest

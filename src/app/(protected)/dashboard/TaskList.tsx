@@ -87,7 +87,7 @@ function TaskCard({
             </button>
           )}
           <button
-            onClick={() => deleteTask(task.id)}
+            onClick={() => { if (window.confirm("Delete this task?")) deleteTask(task.id); }}
             className="rounded-lg bg-white/10 px-3 py-1.5 text-sm font-semibold text-violet-400 transition-colors hover:bg-red-500/20 hover:text-red-400"
           >
             &#x2715;
