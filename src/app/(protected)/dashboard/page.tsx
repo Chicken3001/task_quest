@@ -35,14 +35,14 @@ export default async function DashboardPage() {
     .from("task_quest_quests")
     .select("*")
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: true })
     .returns<Quest[]>();
 
   const { data: tasks } = await supabase
     .from("task_quest_tasks")
     .select("*")
     .eq("user_id", user.id)
-    .order("created_at", { ascending: false })
+    .order("created_at", { ascending: true })
     .returns<Task[]>();
 
   const allEpics = epics ?? [];

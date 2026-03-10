@@ -243,7 +243,10 @@ function EpicSection({
       )}
 
       {!collapsed && (
-        <div className="border-t border-[var(--card-border)] px-4 py-2 flex items-center gap-2">
+        <div
+          className="border-t border-[var(--card-border)] px-4 py-2 flex items-center gap-2"
+          onClick={(e) => e.stopPropagation()}
+        >
           {!confirmDelete ? (
             <button
               onClick={() => setConfirmDelete(true)}
