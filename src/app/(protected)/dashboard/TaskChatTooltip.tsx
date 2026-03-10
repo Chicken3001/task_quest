@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { updateTaskNotes } from "./actions";
+import { isShoppingTask, isShoppingDismissed, dismissShopping } from "@/lib/shopping";
 
 interface TaskContext {
   taskTitle: string;
@@ -38,6 +39,10 @@ export function TaskChatTooltip({
   const [showNotesTooltip, setShowNotesTooltip] = useState(false);
   const [compacting, setCompacting] = useState(false);
   const [notesExpanded, setNotesExpanded] = useState(false);
+  const [showShoppingAds, setShowShoppingAds] = useState(false);
+  const [shoppingDismissed, setShoppingDismissed] = useState(false);
+
+  const isShopping = isShoppingTask(context.taskTitle, context.taskDescription);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const notesRef = useRef<HTMLTextAreaElement>(null);
@@ -45,8 +50,11 @@ export function TaskChatTooltip({
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
+      if (isShopping) {
+        setShoppingDismissed(isShoppingDismissed(taskId));
+      }
     }
-  }, [open]);
+  }, [open, isShopping, taskId]);
 
   useEffect(() => {
     if (editingNotes) {
@@ -263,6 +271,70 @@ export function TaskChatTooltip({
                 {savingNotes ? "Saving..." : "Save Notes"}
               </button>
             </div>
+          </div>
+        )}
+
+        {/* Shopping suggestion banner */}
+        {isShopping && !shoppingDismissed && !showShoppingAds && (
+          <div className="flex-shrink-0 border-b border-[var(--card-border)] px-6 py-2.5">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-violet-300">
+                This looks like a shopping task — want to see product suggestions that might help?
+              </p>
+              <div className="flex shrink-0 items-center gap-2">
+                <button
+                  onClick={() => setShowShoppingAds(true)}
+                  className="rounded-md bg-amber-500/20 px-2.5 py-1 text-xs font-semibold text-amber-400 transition-colors hover:bg-amber-500/30"
+                >
+                  Show me
+                </button>
+                <button
+                  onClick={() => {
+                    dismissShopping(taskId);
+                    setShoppingDismissed(true);
+                  }}
+                  className="text-xs font-semibold text-violet-500 transition-colors hover:text-violet-300"
+                >
+                  No thanks
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Shopping product suggestions (placeholder — wired for Google Shopping API) */}
+        {showShoppingAds && (
+          <div className="flex-shrink-0 border-b border-[var(--card-border)] px-6 py-3">
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs font-bold text-amber-400">Suggested Products</p>
+              <button
+                onClick={() => {
+                  dismissShopping(taskId);
+                  setShoppingDismissed(true);
+                  setShowShoppingAds(false);
+                }}
+                className="text-xs font-semibold text-violet-500 transition-colors hover:text-violet-300"
+              >
+                Hide
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              {[1, 2, 3, 4].map((i) => (
+                <div
+                  key={i}
+                  className="flex items-center gap-2 rounded-lg border border-white/5 bg-white/5 p-2"
+                >
+                  <div className="h-10 w-10 shrink-0 rounded-md bg-white/10" />
+                  <div className="min-w-0 flex-1">
+                    <div className="h-2.5 w-3/4 rounded bg-white/10" />
+                    <div className="mt-1.5 h-2 w-1/2 rounded bg-white/10" />
+                  </div>
+                </div>
+              ))}
+            </div>
+            <p className="mt-2 text-center text-xs text-violet-500">
+              Product suggestions coming soon
+            </p>
           </div>
         )}
 
