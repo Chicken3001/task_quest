@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from "next/server";
 const GEMINI_URL =
   "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent";
 
-const SYSTEM_PROMPT = `You are a friendly project planning assistant. Your job is to have a short conversation to understand what the user wants to build, then signal when you have enough information to generate a structured project plan.
+const EPIC_CHAT_PROMPT = `You are a friendly project planning assistant. Your job is to have a short conversation to understand what the user wants to build, then signal when you have enough information to generate a structured project plan with multiple quests and tasks.
 
 Rules:
 - Ask clarifying questions to understand scope, tech stack, target users, and key features.
@@ -13,6 +13,24 @@ Rules:
 - Do NOT generate the actual plan — just gather information.
 - Keep your messages concise and conversational (2-3 sentences max).
 - When you have enough info, set readyToGenerate to true and say something like "I have a good picture now! Click Generate Plan when you're ready."
+
+You MUST respond with valid JSON matching this schema:
+{
+  "message": "string",
+  "suggestedResponses": ["string", "string"],
+  "readyToGenerate": false
+}`;
+
+const QUEST_CHAT_PROMPT = `You are a friendly planning assistant. Your job is to have a short conversation to understand a focused goal or small project the user wants to accomplish, then signal when you have enough information to generate a single quest with tasks.
+
+Rules:
+- This is for smaller, focused projects — a single quest with a list of tasks. Not a large multi-part epic.
+- Ask 1-2 clarifying questions to understand what they want to accomplish and any constraints.
+- Each response MUST include 2-4 suggested responses the user can click (short, natural phrases).
+- Reach readyToGenerate: true within 1-3 exchanges (keep it quick).
+- Do NOT generate the actual plan — just gather information.
+- Keep your messages concise and conversational (2-3 sentences max).
+- When you have enough info, set readyToGenerate to true and say something like "Got it! Click Generate Plan when you're ready."
 
 You MUST respond with valid JSON matching this schema:
 {
@@ -32,7 +50,9 @@ export async function POST(req: NextRequest) {
   if (!apiKey)
     return NextResponse.json({ error: "GEMINI_API_KEY not configured" }, { status: 500 });
 
-  const { messages } = await req.json();
+  const { messages, mode = "epic" } = await req.json();
+
+  const systemPrompt = mode === "quest" ? QUEST_CHAT_PROMPT : EPIC_CHAT_PROMPT;
 
   // Map messages to Gemini format
   const contents = (
@@ -48,7 +68,7 @@ export async function POST(req: NextRequest) {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      system_instruction: { parts: [{ text: SYSTEM_PROMPT }] },
+      system_instruction: { parts: [{ text: systemPrompt }] },
       contents,
       generationConfig: {
         response_mime_type: "application/json",

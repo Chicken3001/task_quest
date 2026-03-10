@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 import { XP_REWARDS, getLevel, type Difficulty } from "@/lib/xp";
-import type { GeneratedEpic } from "@/lib/types";
+import type { GeneratedEpic, GeneratedQuest } from "@/lib/types";
 
 export async function addTask(formData: FormData) {
   const supabase = await createClient();
@@ -15,6 +15,7 @@ export async function addTask(formData: FormData) {
   const title = formData.get("title") as string;
   const description = (formData.get("description") as string) || null;
   const difficulty = formData.get("difficulty") as Difficulty;
+  const questId = (formData.get("quest_id") as string) || null;
 
   if (!title || !difficulty) throw new Error("Title and difficulty required");
 
@@ -27,7 +28,7 @@ export async function addTask(formData: FormData) {
     description,
     difficulty,
     xp_reward: xpReward,
-    quest_id: null,
+    quest_id: questId,
   });
 
   revalidatePath("/dashboard");
@@ -154,6 +155,57 @@ export async function deleteTask(taskId: string) {
     .from("task_quest_tasks")
     .delete()
     .eq("id", taskId)
+    .eq("user_id", user.id);
+
+  revalidatePath("/dashboard");
+}
+
+export async function createQuestWithTasks(quest: GeneratedQuest) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  const { data: questRow, error: questErr } = await supabase
+    .from("task_quest_quests")
+    .insert({
+      user_id: user.id,
+      epic_id: null,
+      name: quest.name,
+      description: quest.description || null,
+    })
+    .select("id")
+    .single();
+
+  if (questErr || !questRow) throw new Error("Failed to create quest");
+
+  const taskRows = quest.tasks.map((t) => ({
+    user_id: user.id,
+    quest_id: questRow.id,
+    title: t.title,
+    description: t.description || null,
+    difficulty: t.difficulty,
+    xp_reward: XP_REWARDS[t.difficulty],
+  }));
+
+  await supabase.from("task_quest_tasks").insert(taskRows);
+
+  revalidatePath("/dashboard");
+}
+
+export async function deleteQuest(questId: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  // FK cascades will remove child tasks
+  await supabase
+    .from("task_quest_quests")
+    .delete()
+    .eq("id", questId)
     .eq("user_id", user.id);
 
   revalidatePath("/dashboard");

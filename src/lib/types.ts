@@ -21,7 +21,7 @@ export interface Epic {
 export interface Quest {
   id: string;
   user_id: string;
-  epic_id: string;
+  epic_id: string | null;
   name: string;
   description: string | null;
   status: "active" | "completed";

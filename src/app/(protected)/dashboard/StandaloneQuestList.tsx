@@ -1,9 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { Epic, Quest, Task } from "@/lib/types";
+import type { Quest, Task } from "@/lib/types";
 import { DIFFICULTY_COLORS, TIME_ESTIMATES } from "@/lib/xp";
-import { completeTask, deleteTask, deleteEpic } from "./actions";
+import { completeTask, deleteTask, deleteQuest } from "./actions";
 
 function TaskRow({ task }: { task: Task }) {
   const [completing, setCompleting] = useState(false);
@@ -13,9 +13,7 @@ function TaskRow({ task }: { task: Task }) {
     setCompleting(true);
     try {
       const result = await completeTask(task.id);
-      if (result.epicCompleted) {
-        setToast("Epic completed!");
-      } else if (result.questCompleted) {
+      if (result.questCompleted) {
         setToast("Quest completed!");
       } else if (result.leveledUp) {
         setToast(`Level Up! Level ${result.newLevel}!`);
@@ -31,7 +29,10 @@ function TaskRow({ task }: { task: Task }) {
   return (
     <div className={`flex items-center gap-3 rounded-lg border border-white/5 bg-white/5 px-3 py-2 ${isCompleted ? "opacity-60" : ""}`}>
       {toast && (
-        <div className="absolute -top-8 left-0 right-0 rounded-lg bg-gradient-to-r from-yellow-500/20 to-orange-500/20 px-3 py-1 text-center text-xs font-bold text-yellow-300">
+        <div
+          className="absolute -top-8 left-0 right-0 rounded-lg bg-gradient-to-r from-yellow-500/20 to-orange-500/20 px-3 py-1 text-center text-xs font-bold text-yellow-300"
+          style={{ animation: "level-up 0.5s ease-out" }}
+        >
           &#x2B50; {toast}
         </div>
       )}
@@ -78,69 +79,6 @@ function QuestSection({ quest, tasks }: { quest: Quest; tasks: Task[] }) {
   const isComplete = quest.status === "completed";
 
   return (
-    <div className={`rounded-xl border border-white/10 bg-white/[0.03] ${isComplete ? "opacity-70" : ""}`}>
-      <button
-        onClick={() => setCollapsed((c) => !c)}
-        className="w-full px-4 py-3 text-left"
-      >
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0 flex-1">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white">{quest.name}</span>
-              {isComplete && (
-                <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-400">
-                  Done
-                </span>
-              )}
-            </div>
-            {quest.description && (
-              <p className="mt-0.5 text-xs text-violet-400">{quest.description}</p>
-            )}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            <span className="text-xs font-semibold text-violet-400">{done}/{total}</span>
-            <span className="text-xs text-violet-500">{collapsed ? "▶" : "▼"}</span>
-          </div>
-        </div>
-        <div className="mt-2 h-1 overflow-hidden rounded-full bg-white/10">
-          <div
-            className={`h-full rounded-full transition-all duration-500 ${
-              isComplete
-                ? "bg-gradient-to-r from-emerald-500 to-teal-500"
-                : "bg-gradient-to-r from-violet-500 to-indigo-500"
-            }`}
-            style={{ width: `${Math.min(progress * 100, 100)}%` }}
-          />
-        </div>
-      </button>
-
-      {!collapsed && tasks.length > 0 && (
-        <div className="border-t border-white/5 px-4 py-3 space-y-1.5">
-          {tasks.map((task) => (
-            <TaskRow key={task.id} task={task} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function EpicSection({
-  epic,
-  quests,
-  tasks,
-}: {
-  epic: Epic;
-  quests: Quest[];
-  tasks: Task[];
-}) {
-  const [collapsed, setCollapsed] = useState(false);
-  const totalTasks = tasks.length;
-  const doneTasks = tasks.filter((t) => t.status === "completed").length;
-  const progress = totalTasks === 0 ? 0 : doneTasks / totalTasks;
-  const isComplete = epic.status === "completed";
-
-  return (
     <div
       className={`rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] overflow-hidden ${
         isComplete ? "opacity-70" : ""
@@ -153,20 +91,20 @@ function EpicSection({
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
-              <span className="text-base font-bold text-white">{epic.name}</span>
+              <span className="text-base font-bold text-white">{quest.name}</span>
               {isComplete && (
                 <span className="rounded-full bg-emerald-500/20 px-2 py-0.5 text-xs font-bold text-emerald-400">
                   Complete
                 </span>
               )}
             </div>
-            {epic.description && (
-              <p className="mt-0.5 text-sm text-violet-400">{epic.description}</p>
+            {quest.description && (
+              <p className="mt-0.5 text-sm text-violet-400">{quest.description}</p>
             )}
           </div>
           <div className="flex shrink-0 items-center gap-3">
             <span className="text-xs font-semibold text-violet-400">
-              {doneTasks}/{totalTasks} tasks
+              {done}/{total} tasks
             </span>
             <span className="text-violet-500">{collapsed ? "▶" : "▼"}</span>
           </div>
@@ -183,14 +121,10 @@ function EpicSection({
         </div>
       </button>
 
-      {!collapsed && quests.length > 0 && (
-        <div className="border-t border-[var(--card-border)] px-4 py-4 space-y-3">
-          {quests.map((quest) => (
-            <QuestSection
-              key={quest.id}
-              quest={quest}
-              tasks={tasks.filter((t) => t.quest_id === quest.id)}
-            />
+      {!collapsed && tasks.length > 0 && (
+        <div className="border-t border-[var(--card-border)] px-4 py-4 space-y-1.5">
+          {tasks.map((task) => (
+            <TaskRow key={task.id} task={task} />
           ))}
         </div>
       )}
@@ -198,10 +132,10 @@ function EpicSection({
       {!collapsed && (
         <div className="border-t border-[var(--card-border)] px-4 py-2">
           <button
-            onClick={() => deleteEpic(epic.id)}
+            onClick={() => deleteQuest(quest.id)}
             className="text-xs font-semibold text-violet-500 transition-colors hover:text-red-400"
           >
-            Delete Epic
+            Delete Quest
           </button>
         </div>
       )}
@@ -209,27 +143,22 @@ function EpicSection({
   );
 }
 
-export function EpicList({
-  epics,
+export function StandaloneQuestList({
   quests,
   tasks,
 }: {
-  epics: Epic[];
   quests: Quest[];
   tasks: Task[];
 }) {
-  if (epics.length === 0) return null;
+  if (quests.length === 0) return null;
 
   return (
     <div className="space-y-3">
-      {epics.map((epic) => (
-        <EpicSection
-          key={epic.id}
-          epic={epic}
-          quests={quests.filter((q) => q.epic_id === epic.id)}
-          tasks={tasks.filter((t) =>
-            quests.some((q) => q.epic_id === epic.id && q.id === t.quest_id)
-          )}
+      {quests.map((quest) => (
+        <QuestSection
+          key={quest.id}
+          quest={quest}
+          tasks={tasks.filter((t) => t.quest_id === quest.id)}
         />
       ))}
     </div>

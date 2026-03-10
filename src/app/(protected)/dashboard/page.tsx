@@ -6,6 +6,7 @@ import { TaskList } from "./TaskList";
 import { AddTaskForm } from "./AddTaskForm";
 import { QuestPlanner } from "./QuestPlanner";
 import { EpicList } from "./EpicList";
+import { StandaloneQuestList } from "./StandaloneQuestList";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -48,6 +49,7 @@ export default async function DashboardPage() {
   const allQuests = quests ?? [];
   const allTasks = tasks ?? [];
 
+  const standaloneQuests = allQuests.filter((q) => !q.epic_id);
   const standaloneTasks = allTasks.filter((t) => !t.quest_id);
   const standaloneActive = standaloneTasks.filter((t) => t.status === "active");
   const standaloneCompleted = standaloneTasks.filter((t) => t.status === "completed");
@@ -134,7 +136,7 @@ export default async function DashboardPage() {
 
       {/* Actions row */}
       <div className="flex flex-wrap items-center gap-3">
-        <AddTaskForm />
+        <AddTaskForm epics={allEpics} quests={allQuests} />
         <QuestPlanner />
       </div>
 
@@ -148,15 +150,25 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      {/* Standalone Quests (from Quest Planner) */}
+      {standaloneQuests.length > 0 && (
+        <div>
+          <h2 className="mb-3 text-lg font-bold text-white">
+            Quests ({standaloneQuests.length})
+          </h2>
+          <StandaloneQuestList quests={standaloneQuests} tasks={allTasks} />
+        </div>
+      )}
+
       {/* Standalone Active Tasks */}
       <div>
         <h2 className="mb-3 text-lg font-bold text-white">
           Active Tasks ({standaloneActive.length})
         </h2>
-        {standaloneActive.length === 0 && allEpics.length === 0 ? (
+        {standaloneActive.length === 0 && allEpics.length === 0 && standaloneQuests.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-[var(--card-border)] bg-[var(--card-bg)]/50 p-8 text-center">
             <p className="text-violet-400">
-              No active tasks. Add one above or use the Quest Planner!
+              No active tasks. Add one above or use the Quest/Epic Planner!
             </p>
           </div>
         ) : standaloneActive.length > 0 ? (

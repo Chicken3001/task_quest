@@ -7,6 +7,13 @@ export const XP_REWARDS: Record<Difficulty, number> = {
   epic: 100,
 };
 
+export const TIME_ESTIMATES: Record<Difficulty, string> = {
+  easy: "~30 min",
+  medium: "1-3 hrs",
+  hard: "4-8 hrs",
+  epic: "Multi-day",
+};
+
 export const DIFFICULTY_COLORS: Record<Difficulty, string> = {
   easy: "bg-emerald-100 text-emerald-700 border-emerald-300",
   medium: "bg-yellow-100 text-yellow-700 border-yellow-300",

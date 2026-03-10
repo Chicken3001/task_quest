@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { completeTask, deleteTask } from "./actions";
-import { DIFFICULTY_COLORS } from "@/lib/xp";
+import { DIFFICULTY_COLORS, TIME_ESTIMATES } from "@/lib/xp";
 import type { Task } from "@/lib/types";
 
 function TaskCard({
@@ -66,7 +66,7 @@ function TaskCard({
           {task.description && (
             <p className="mt-1 text-sm text-violet-400">{task.description}</p>
           )}
-          <p className="mt-1 text-xs text-violet-500">+{task.xp_reward} XP</p>
+          <p className="mt-1 text-xs text-violet-500">+{task.xp_reward} XP · {TIME_ESTIMATES[task.difficulty]}</p>
         </div>
         <div className="flex gap-2">
           {type === "active" && (
