@@ -10,9 +10,9 @@ Rules:
 - Quest names and task titles MUST be normal readable text with spaces (e.g., "User Authentication", "Set up database schema"). Do NOT use PascalCase for these.
 - Create the appropriate number of quests (groups of related work) to complete the epic.
 - Each quest has 2-6 tasks (individual action items).
-- The quests should be in a logical order, but they do not need to be strictly sequential. Some quests can be worked on in parallel.
+- CRITICAL: Quests MUST be ordered chronologically — the order they would be started in real life. For example, "Acquire Materials" must come before "Installation", which must come before "Finishing/Paint". Never put a later phase before an earlier one.
 - The tasks should be actionable and specific, not vague or high-level. They should represent concrete steps that can be taken to complete the quest.
-- The tasks should be in a logical order within each quest, but they do not need to be strictly sequential. Some tasks can be worked on in parallel.
+- CRITICAL: Tasks within each quest MUST be ordered in the sequence they would be done in real life. Prerequisite steps always come first. For example, "Buy supplies" before "Install drywall" before "Apply joint compound" before "Sand" before "Paint".
 - Assign each task a difficulty:
   - easy: ~30 min, simple/routine task
   - medium: 1-3 hours, moderate complexity
@@ -49,7 +49,7 @@ Rules:
 - The quest name MUST be normal readable text with spaces (e.g., "Portfolio Website", "Clean up garage").
 - Create 2-8 tasks (individual action items) within the quest.
 - The tasks should be actionable and specific, not vague or high-level.
-- The tasks should be in a logical order, but they do not need to be strictly sequential.
+- CRITICAL: Tasks MUST be ordered in the sequence they would be done in real life. Prerequisite steps always come first (e.g., "Buy supplies" before "Install" before "Finish").
 - Assign each task a difficulty:
   - easy: ~30 min, simple/routine task
   - medium: 1-3 hours, moderate complexity
