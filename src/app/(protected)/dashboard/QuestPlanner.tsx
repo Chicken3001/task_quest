@@ -25,6 +25,7 @@ function PlannerModal({
   const [epic, setEpic] = useState<GeneratedEpic | null>(null);
   const [quest, setQuest] = useState<GeneratedQuest | null>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
 
   const label = mode === "quest" ? "Quest" : "Epic";
 
@@ -64,6 +65,7 @@ function PlannerModal({
       setError(e instanceof Error ? e.message : "Something went wrong");
     } finally {
       setSending(false);
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   }
 
@@ -229,6 +231,7 @@ function PlannerModal({
               )}
               <div className="flex gap-2">
                 <textarea
+                  ref={inputRef}
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
                   onKeyDown={(e) => {
