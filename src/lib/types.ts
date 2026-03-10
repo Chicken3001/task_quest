@@ -39,6 +39,7 @@ export interface Task {
   difficulty: "easy" | "medium" | "hard" | "epic";
   xp_reward: number;
   status: "active" | "completed";
+  notes: string | null;
   created_at: string;
   completed_at: string | null;
 }

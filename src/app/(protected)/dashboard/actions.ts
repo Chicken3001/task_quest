@@ -261,6 +261,22 @@ export async function createEpicWithQuestsAndTasks(epic: GeneratedEpic) {
   revalidatePath("/dashboard");
 }
 
+export async function updateTaskNotes(taskId: string, notes: string) {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("Not authenticated");
+
+  await supabase
+    .from("task_quest_tasks")
+    .update({ notes })
+    .eq("id", taskId)
+    .eq("user_id", user.id);
+
+  revalidatePath("/dashboard");
+}
+
 export async function deleteEpic(epicId: string) {
   const supabase = await createClient();
   const {

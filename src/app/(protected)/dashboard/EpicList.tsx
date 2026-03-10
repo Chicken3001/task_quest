@@ -53,6 +53,8 @@ function TaskRow({ task, ctx }: { task: Task; ctx: TaskRowContext }) {
             {task.difficulty}
           </span>
           <TaskChatTooltip
+            taskId={task.id}
+            notes={task.notes}
             context={{
               taskTitle: task.title,
               taskDescription: task.description,

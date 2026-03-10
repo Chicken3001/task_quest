@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import { updateTaskNotes } from "./actions";
 
 interface TaskContext {
   taskTitle: string;
@@ -17,19 +18,39 @@ interface Message {
   content: string;
 }
 
-export function TaskChatTooltip({ context }: { context: TaskContext }) {
+export function TaskChatTooltip({
+  taskId,
+  notes: initialNotes,
+  context,
+}: {
+  taskId: string;
+  notes: string | null;
+  context: TaskContext;
+}) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
+  const [notes, setNotes] = useState(initialNotes ?? "");
+  const [editingNotes, setEditingNotes] = useState(false);
+  const [savingNotes, setSavingNotes] = useState(false);
+  const [summarizing, setSummarizing] = useState(false);
+  const [showNotesTooltip, setShowNotesTooltip] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const notesRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
     if (open) {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
+
+  useEffect(() => {
+    if (editingNotes) {
+      setTimeout(() => notesRef.current?.focus(), 50);
+    }
+  }, [editingNotes]);
 
   function scrollToBottom() {
     setTimeout(() => chatEndRef.current?.scrollIntoView({ behavior: "smooth" }), 50);
@@ -71,6 +92,45 @@ export function TaskChatTooltip({ context }: { context: TaskContext }) {
     }
   }
 
+  async function handleSaveNotes() {
+    setSummarizing(true);
+    try {
+      const res = await fetch("/api/quests/task-chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          messages: [
+            ...messages.map((m) => ({ role: m.role, content: m.content })),
+            {
+              role: "user",
+              content:
+                "Summarize the important takeaways from our conversation as concise bullet-point notes I can reference later. Only include actionable or useful information. Do not include any preamble.",
+            },
+          ],
+          context,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed");
+
+      setNotes(data.message);
+      setSummarizing(false);
+      setEditingNotes(true);
+    } catch {
+      setSummarizing(false);
+    }
+  }
+
+  async function handleSaveEditedNotes() {
+    setSavingNotes(true);
+    try {
+      await updateTaskNotes(taskId, notes);
+      setEditingNotes(false);
+    } finally {
+      setSavingNotes(false);
+    }
+  }
+
   const modal = open && createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
@@ -93,6 +153,54 @@ export function TaskChatTooltip({ context }: { context: TaskContext }) {
             </button>
           </div>
         </div>
+
+        {/* Saved notes display */}
+        {notes && !editingNotes && (
+          <div className="border-b border-[var(--card-border)] px-6 py-3">
+            <div className="flex items-center justify-between mb-1">
+              <p className="text-xs font-bold text-violet-400">Saved Notes</p>
+              <button
+                onClick={() => setEditingNotes(true)}
+                className="text-xs font-semibold text-violet-500 transition-colors hover:text-violet-300"
+              >
+                Edit
+              </button>
+            </div>
+            <p className="text-sm text-violet-200 whitespace-pre-wrap">{notes}</p>
+          </div>
+        )}
+
+        {/* Editing notes */}
+        {editingNotes && (
+          <div className="border-b border-[var(--card-border)] px-6 py-3">
+            <p className="text-xs font-bold text-violet-400 mb-1">Edit Notes</p>
+            <textarea
+              ref={notesRef}
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={4}
+              className="w-full resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-violet-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+            />
+            <div className="mt-2 flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setNotes(initialNotes ?? "");
+                  setEditingNotes(false);
+                }}
+                className="rounded-lg bg-white/10 px-3 py-1.5 text-xs font-semibold text-violet-400 transition-colors hover:bg-white/15"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleSaveEditedNotes}
+                disabled={savingNotes}
+                className="rounded-lg bg-violet-600 px-3 py-1.5 text-xs font-bold text-white transition-all hover:bg-violet-500 disabled:opacity-50"
+              >
+                {savingNotes ? "Saving..." : "Save Notes"}
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
@@ -117,7 +225,7 @@ export function TaskChatTooltip({ context }: { context: TaskContext }) {
               </div>
             </div>
           ))}
-          {sending && (
+          {(sending || summarizing) && (
             <div className="flex justify-start">
               <div className="flex items-center gap-1.5 rounded-2xl bg-white/5 px-4 py-3">
                 <span className="typing-dot" />
@@ -142,7 +250,7 @@ export function TaskChatTooltip({ context }: { context: TaskContext }) {
                   handleSend();
                 }
               }}
-              placeholder="Ask a question..."
+              placeholder="Ask a question... can even be 'help me'"
               rows={1}
               className="flex-1 resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-violet-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
             />
@@ -154,6 +262,26 @@ export function TaskChatTooltip({ context }: { context: TaskContext }) {
             >
               Send
             </button>
+            {/* Save Notes button */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={handleSaveNotes}
+                disabled={messages.length === 0 || summarizing || sending}
+                onMouseEnter={() => setShowNotesTooltip(true)}
+                onMouseLeave={() => setShowNotesTooltip(false)}
+                className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-sm font-bold text-white transition-all hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50"
+              >
+                {summarizing ? "..." : "Save Notes"}
+              </button>
+              {showNotesTooltip && (
+                <div className="absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 shadow-xl">
+                  <p className="text-xs text-violet-300">
+                    Summarizes the important takeaways from this conversation and saves them as notes on the task.
+                  </p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -170,7 +298,11 @@ export function TaskChatTooltip({ context }: { context: TaskContext }) {
           e.preventDefault();
           setOpen((o) => !o);
         }}
-        className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-500/20 text-xs text-indigo-400 transition-colors hover:bg-indigo-500/30 hover:text-indigo-300"
+        className={`inline-flex h-5 w-5 items-center justify-center rounded-full text-xs transition-colors ${
+          initialNotes
+            ? "bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30 hover:text-emerald-300"
+            : "bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 hover:text-indigo-300"
+        }`}
         aria-label="Ask about this task"
       >
         <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
