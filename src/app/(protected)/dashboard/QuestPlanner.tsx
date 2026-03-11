@@ -242,7 +242,7 @@ function PlannerModal({
                   }}
                   placeholder="Type your response..."
                   rows={1}
-                  className="flex-1 resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 sm:px-4 text-sm text-white placeholder-violet-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="flex-1 resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 sm:px-4 text-base sm:text-sm text-white placeholder-violet-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 />
                 <button
                   onClick={() => handleSend()}
