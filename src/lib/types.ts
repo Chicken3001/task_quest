@@ -27,6 +27,7 @@ export interface Quest {
   description: string | null;
   plan_summary: string | null;
   status: "active" | "completed";
+  position: number;
   created_at: string;
 }
 
@@ -40,6 +41,7 @@ export interface Task {
   xp_reward: number;
   status: "active" | "completed";
   notes: string | null;
+  position: number;
   created_at: string;
   completed_at: string | null;
 }

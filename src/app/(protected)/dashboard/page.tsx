@@ -35,6 +35,7 @@ export default async function DashboardPage() {
     .from("task_quest_quests")
     .select("*")
     .eq("user_id", user.id)
+    .order("position", { ascending: true })
     .order("created_at", { ascending: true })
     .returns<Quest[]>();
 
@@ -42,6 +43,7 @@ export default async function DashboardPage() {
     .from("task_quest_tasks")
     .select("*")
     .eq("user_id", user.id)
+    .order("position", { ascending: true })
     .order("created_at", { ascending: true })
     .returns<Task[]>();
 

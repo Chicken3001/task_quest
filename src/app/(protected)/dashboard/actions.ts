@@ -181,13 +181,14 @@ export async function createQuestWithTasks(quest: GeneratedQuest) {
 
   if (questErr || !questRow) throw new Error("Failed to create quest");
 
-  const taskRows = quest.tasks.map((t) => ({
+  const taskRows = quest.tasks.map((t, i) => ({
     user_id: user.id,
     quest_id: questRow.id,
     title: t.title,
     description: t.description || null,
     difficulty: t.difficulty,
     xp_reward: XP_REWARDS[t.difficulty],
+    position: i,
   }));
 
   await supabase.from("task_quest_tasks").insert(taskRows);
@@ -232,7 +233,8 @@ export async function createEpicWithQuestsAndTasks(epic: GeneratedEpic) {
 
   if (epicErr || !epicRow) throw new Error("Failed to create epic");
 
-  for (const quest of epic.quests) {
+  for (let qi = 0; qi < epic.quests.length; qi++) {
+    const quest = epic.quests[qi];
     const { data: questRow, error: questErr } = await supabase
       .from("task_quest_quests")
       .insert({
@@ -240,19 +242,21 @@ export async function createEpicWithQuestsAndTasks(epic: GeneratedEpic) {
         epic_id: epicRow.id,
         name: quest.name,
         description: quest.description || null,
+        position: qi,
       })
       .select("id")
       .single();
 
     if (questErr || !questRow) throw new Error("Failed to create quest");
 
-    const taskRows = quest.tasks.map((t) => ({
+    const taskRows = quest.tasks.map((t, ti) => ({
       user_id: user.id,
       quest_id: questRow.id,
       title: t.title,
       description: t.description || null,
       difficulty: t.difficulty,
       xp_reward: XP_REWARDS[t.difficulty],
+      position: ti,
     }));
 
     await supabase.from("task_quest_tasks").insert(taskRows);
