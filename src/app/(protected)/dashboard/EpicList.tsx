@@ -38,7 +38,7 @@ function TaskRow({ task, ctx }: { task: Task; ctx: TaskRowContext }) {
   const isCompleted = task.status === "completed";
 
   return (
-    <div className={`flex items-center gap-3 rounded-lg border border-white/5 bg-white/5 px-3 py-2 ${isCompleted ? "opacity-60" : ""}`}>
+    <div className={`flex flex-wrap items-center gap-2 sm:gap-3 rounded-lg border border-white/5 bg-white/5 px-3 py-2 ${isCompleted ? "opacity-60" : ""}`}>
       {toast && (
         <div className="absolute -top-8 left-0 right-0 rounded-lg bg-gradient-to-r from-yellow-500/20 to-orange-500/20 px-3 py-1 text-center text-xs font-bold text-yellow-300">
           &#x2B50; {toast}
@@ -69,7 +69,7 @@ function TaskRow({ task, ctx }: { task: Task; ctx: TaskRowContext }) {
           <p className="mt-0.5 text-xs text-violet-400">{task.description}</p>
         )}
       </div>
-      <span className="shrink-0 text-xs font-semibold text-violet-500">
+      <span className="hidden sm:inline shrink-0 text-xs font-semibold text-violet-500">
         {TIME_ESTIMATES[task.difficulty]} · +{task.xp_reward} XP
       </span>
       {!isCompleted && (

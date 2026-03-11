@@ -138,12 +138,12 @@ function PlannerModal({
     : `${totalQuests} quests \u00B7 ${totalTasks} tasks \u00B7 ${totalXp} XP`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
 
-      <div className="relative flex w-full max-w-2xl flex-col max-h-[85vh] rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-2xl">
+      <div className="relative flex w-full flex-col h-[100dvh] sm:h-auto sm:max-w-2xl sm:max-h-[85vh] sm:rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-2xl">
         {/* Header */}
-        <div className="flex-shrink-0 border-b border-[var(--card-border)] px-6 py-4">
+        <div className="flex-shrink-0 border-b border-[var(--card-border)] px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-black text-white">
@@ -177,7 +177,7 @@ function PlannerModal({
         {/* Chat step */}
         {step === "chat" && (
           <>
-            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 space-y-4">
               {messages.map((msg, i) => (
                 <div key={i}>
                   <div className={`flex ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
@@ -220,7 +220,7 @@ function PlannerModal({
               <div ref={chatEndRef} />
             </div>
 
-            <div className="flex-shrink-0 border-t border-[var(--card-border)] px-6 py-4">
+            <div className="flex-shrink-0 border-t border-[var(--card-border)] px-4 py-3 sm:px-6 sm:py-4">
               {readyToGenerate && (
                 <button
                   onClick={handleGenerate}
@@ -242,12 +242,12 @@ function PlannerModal({
                   }}
                   placeholder="Type your response..."
                   rows={1}
-                  className="flex-1 resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-violet-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+                  className="flex-1 resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 sm:px-4 text-sm text-white placeholder-violet-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
                 />
                 <button
                   onClick={() => handleSend()}
                   disabled={sending || !input.trim()}
-                  className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:opacity-50"
+                  className="shrink-0 rounded-xl bg-violet-600 px-3 py-2.5 sm:px-4 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:opacity-50"
                 >
                   Send
                 </button>
@@ -273,8 +273,8 @@ function PlannerModal({
         {/* Preview step — Quest mode */}
         {step === "preview" && mode === "quest" && quest && (
           <>
-            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
-              <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-4">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 space-y-4">
+              <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-3 sm:p-4">
                 <h3 className="text-lg font-black text-white">{quest.name}</h3>
                 {quest.description && (
                   <p className="mt-1 text-sm text-violet-300">{quest.description}</p>
@@ -307,7 +307,7 @@ function PlannerModal({
               </div>
             </div>
 
-            <div className="flex-shrink-0 border-t border-[var(--card-border)] px-6 py-4">
+            <div className="flex-shrink-0 border-t border-[var(--card-border)] px-4 py-3 sm:px-6 sm:py-4">
               <div className="flex gap-3">
                 <button
                   onClick={() => { setStep("generating"); handleGenerate(); }}
@@ -330,7 +330,7 @@ function PlannerModal({
         {/* Preview step — Epic mode */}
         {step === "preview" && mode === "epic" && epic && (
           <>
-            <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 space-y-4">
               <div className="rounded-xl border border-violet-500/30 bg-violet-500/10 p-4">
                 <h3 className="text-lg font-black text-white">{epic.name}</h3>
                 {epic.description && (
@@ -375,7 +375,7 @@ function PlannerModal({
               ))}
             </div>
 
-            <div className="flex-shrink-0 border-t border-[var(--card-border)] px-6 py-4">
+            <div className="flex-shrink-0 border-t border-[var(--card-border)] px-4 py-3 sm:px-6 sm:py-4">
               <div className="flex gap-3">
                 <button
                   onClick={() => { setStep("generating"); handleGenerate(); }}

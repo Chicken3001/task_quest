@@ -170,16 +170,16 @@ export function TaskChatTooltip({
   }
 
   const modal = open && createPortal(
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center sm:justify-center sm:p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)} />
 
-      <div className="relative flex w-full max-w-2xl flex-col max-h-[85vh] rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-2xl">
+      <div className="relative flex w-full flex-col h-[100dvh] sm:h-auto sm:max-w-2xl sm:max-h-[85vh] sm:rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] shadow-2xl">
         {/* Header */}
-        <div className="flex-shrink-0 border-b border-[var(--card-border)] px-6 py-4">
+        <div className="flex-shrink-0 border-b border-[var(--card-border)] px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-xl font-black text-white">Task Assistant</h2>
-              <p className="text-sm text-violet-400">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-lg sm:text-xl font-black text-white">Task Assistant</h2>
+              <p className="truncate text-sm text-violet-400">
                 Ask about: {context.taskTitle}
               </p>
             </div>
@@ -207,7 +207,7 @@ export function TaskChatTooltip({
           <div className="border-b border-[var(--card-border)]">
             <button
               onClick={() => setNotesExpanded((e) => !e)}
-              className="flex w-full items-center gap-2 px-6 py-2 text-left transition-colors hover:bg-white/5"
+              className="flex w-full items-center gap-2 px-4 py-2 sm:px-6 text-left transition-colors hover:bg-white/5"
             >
               <span className="text-xs text-violet-500">{notesExpanded ? "▼" : "▶"}</span>
               <span className="text-xs font-bold text-violet-400">Notes</span>
@@ -218,7 +218,7 @@ export function TaskChatTooltip({
               )}
             </button>
             {notesExpanded && (
-              <div className="px-6 pb-3">
+              <div className="px-4 pb-3 sm:px-6">
                 <div className="max-h-40 overflow-y-auto">
                   <p className="text-sm text-violet-200 whitespace-pre-wrap">{notes}</p>
                 </div>
@@ -244,7 +244,7 @@ export function TaskChatTooltip({
 
         {/* Editing notes */}
         {editingNotes && (
-          <div className="border-b border-[var(--card-border)] px-6 py-3">
+          <div className="border-b border-[var(--card-border)] px-4 py-3 sm:px-6">
             <p className="text-xs font-bold text-violet-400 mb-1">Edit Notes</p>
             <textarea
               ref={notesRef}
@@ -276,7 +276,7 @@ export function TaskChatTooltip({
 
         {/* Shopping suggestion banner */}
         {isShopping && !shoppingDismissed && !showShoppingAds && (
-          <div className="flex-shrink-0 border-b border-[var(--card-border)] px-6 py-2.5">
+          <div className="flex-shrink-0 border-b border-[var(--card-border)] px-4 py-2.5 sm:px-6">
             <div className="flex items-center justify-between gap-3">
               <p className="text-xs text-violet-300">
                 This looks like a shopping task — want to see product suggestions that might help?
@@ -304,7 +304,7 @@ export function TaskChatTooltip({
 
         {/* Shopping product suggestions (placeholder — wired for Google Shopping API) */}
         {showShoppingAds && (
-          <div className="flex-shrink-0 border-b border-[var(--card-border)] px-6 py-3">
+          <div className="flex-shrink-0 border-b border-[var(--card-border)] px-4 py-3 sm:px-6">
             <div className="flex items-center justify-between mb-2">
               <p className="text-xs font-bold text-amber-400">Suggested Products</p>
               <button
@@ -339,7 +339,7 @@ export function TaskChatTooltip({
         )}
 
         {/* Messages */}
-        <div className="flex-1 min-h-0 overflow-y-auto px-6 py-4 space-y-4">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 space-y-4">
           {messages.length === 0 && (
             <p className="text-sm text-violet-500 text-center py-8">
               Ask a question about this task
@@ -374,7 +374,7 @@ export function TaskChatTooltip({
         </div>
 
         {/* Input */}
-        <div className="flex-shrink-0 border-t border-[var(--card-border)] px-6 py-4">
+        <div className="flex-shrink-0 border-t border-[var(--card-border)] px-4 py-3 sm:px-6 sm:py-4">
           <div className="flex gap-2">
             <textarea
               ref={inputRef}
@@ -386,38 +386,38 @@ export function TaskChatTooltip({
                   handleSend();
                 }
               }}
-              placeholder="Ask a question... can even be 'help me'"
+              placeholder="Ask a question..."
               rows={1}
-              className="flex-1 resize-none rounded-xl border border-white/10 bg-white/5 px-4 py-2.5 text-sm text-white placeholder-violet-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+              className="flex-1 resize-none rounded-xl border border-white/10 bg-white/5 px-3 py-2.5 sm:px-4 text-sm text-white placeholder-violet-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
             />
             <button
               type="button"
               onClick={handleSend}
               disabled={sending || !input.trim()}
-              className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:opacity-50"
+              className="shrink-0 rounded-xl bg-violet-600 px-3 py-2.5 sm:px-4 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:opacity-50"
             >
               Send
             </button>
-            {/* Save Notes button */}
-            <div className="relative">
-              <button
-                type="button"
-                onClick={handleSaveNotes}
-                disabled={messages.length === 0 || summarizing || sending}
-                onMouseEnter={() => setShowNotesTooltip(true)}
-                onMouseLeave={() => setShowNotesTooltip(false)}
-                className="rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2.5 text-sm font-bold text-white transition-all hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50"
-              >
-                {summarizing ? "..." : "Save Notes"}
-              </button>
-              {showNotesTooltip && (
-                <div className="absolute bottom-full right-0 mb-2 w-56 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 shadow-xl">
-                  <p className="text-xs text-violet-300">
-                    Summarizes the important takeaways from this conversation and saves them as notes on the task.
-                  </p>
-                </div>
-              )}
-            </div>
+          </div>
+          {/* Save Notes — separate row for breathing room */}
+          <div className="relative mt-2">
+            <button
+              type="button"
+              onClick={handleSaveNotes}
+              disabled={messages.length === 0 || summarizing || sending}
+              onMouseEnter={() => setShowNotesTooltip(true)}
+              onMouseLeave={() => setShowNotesTooltip(false)}
+              className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-bold text-white transition-all hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50"
+            >
+              {summarizing ? "Summarizing..." : "Save Notes"}
+            </button>
+            {showNotesTooltip && (
+              <div className="absolute bottom-full left-0 sm:left-auto sm:right-0 mb-2 w-56 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 shadow-xl">
+                <p className="text-xs text-violet-300">
+                  Summarizes the important takeaways from this conversation and saves them as notes on the task.
+                </p>
+              </div>
+            )}
           </div>
         </div>
       </div>
