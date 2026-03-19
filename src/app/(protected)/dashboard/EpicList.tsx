@@ -109,11 +109,11 @@ function TaskRow({ task, ctx }: { task: Task; ctx: TaskRowContext }) {
 }
 
 function QuestSection({ quest, tasks, planSummary }: { quest: Quest; tasks: Task[]; planSummary: string | null }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const isComplete = quest.status === "completed";
+  const [collapsed, setCollapsed] = useState(isComplete);
   const total = tasks.length;
   const done = tasks.filter((t) => t.status === "completed").length;
   const progress = total === 0 ? 0 : done / total;
-  const isComplete = quest.status === "completed";
 
   return (
     <div className={`rounded-xl border border-white/10 bg-white/[0.03] ${isComplete ? "opacity-70" : ""}`}>
@@ -175,12 +175,14 @@ function EpicSection({
   epic,
   quests,
   tasks,
+  defaultExpanded,
 }: {
   epic: Epic;
   quests: Quest[];
   tasks: Task[];
+  defaultExpanded: boolean;
 }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(!defaultExpanded);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const totalTasks = tasks.length;
   const doneTasks = tasks.filter((t) => t.status === "completed").length;
@@ -290,6 +292,28 @@ export function EpicList({
 }) {
   if (epics.length === 0) return null;
 
+  // Find the most recently active epic by latest task activity
+  const activeEpics = epics.filter((e) => e.status === "active");
+  let expandedEpicId: string | null = null;
+
+  if (activeEpics.length === 1) {
+    expandedEpicId = activeEpics[0].id;
+  } else if (activeEpics.length > 1) {
+    let latestTime = 0;
+    for (const epic of activeEpics) {
+      const epicTasks = tasks.filter((t) =>
+        quests.some((q) => q.epic_id === epic.id && q.id === t.quest_id)
+      );
+      for (const task of epicTasks) {
+        const t = new Date(task.completed_at ?? task.created_at).getTime();
+        if (t > latestTime) {
+          latestTime = t;
+          expandedEpicId = epic.id;
+        }
+      }
+    }
+  }
+
   return (
     <div className="space-y-3">
       {epics.map((epic) => (
@@ -300,6 +324,7 @@ export function EpicList({
           tasks={tasks.filter((t) =>
             quests.some((q) => q.epic_id === epic.id && q.id === t.quest_id)
           )}
+          defaultExpanded={epic.id === expandedEpicId}
         />
       ))}
     </div>

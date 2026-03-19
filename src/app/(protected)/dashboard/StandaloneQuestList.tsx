@@ -110,12 +110,12 @@ function TaskRow({ task, ctx }: { task: Task; ctx: TaskRowContext }) {
 }
 
 function QuestSection({ quest, tasks }: { quest: Quest; tasks: Task[] }) {
-  const [collapsed, setCollapsed] = useState(false);
+  const isComplete = quest.status === "completed";
+  const [collapsed, setCollapsed] = useState(isComplete);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const total = tasks.length;
   const done = tasks.filter((t) => t.status === "completed").length;
   const progress = total === 0 ? 0 : done / total;
-  const isComplete = quest.status === "completed";
 
   return (
     <div
