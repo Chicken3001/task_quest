@@ -1,4 +1,4 @@
-import { createClient } from "@/lib/supabase/server";
+import { authenticateRequest } from "@/lib/supabase/api-auth";
 import { NextRequest, NextResponse } from "next/server";
 import { GEMINI_URL } from "@/lib/gemini";
 
@@ -74,11 +74,8 @@ Return ONLY valid JSON matching this exact schema:
 }`;
 
 export async function POST(req: NextRequest) {
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  const auth = await authenticateRequest(req);
+  if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey)

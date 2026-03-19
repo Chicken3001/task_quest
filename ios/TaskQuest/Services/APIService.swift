@@ -1,0 +1,116 @@
+import Foundation
+
+enum APIService {
+    static func chatWithPlanner(messages: [ChatMessage], mode: String) async throws -> ChatResponse {
+        let token = try await AuthService.shared.getAccessToken()
+
+        struct RequestBody: Encodable {
+            let messages: [[String: String]]
+            let mode: String
+        }
+
+        let body = RequestBody(
+            messages: messages.map { ["role": $0.role.rawValue, "content": $0.content] },
+            mode: mode
+        )
+
+        var request = URLRequest(url: URL(string: "\(Config.apiBaseURL)/api/quests/chat")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            let errorBody = try? JSONDecoder().decode([String: String].self, from: data)
+            throw APIError.serverError(errorBody?["error"] ?? "Request failed")
+        }
+
+        return try JSONDecoder().decode(ChatResponse.self, from: data)
+    }
+
+    static func generatePlan(messages: [ChatMessage], mode: String) async throws -> (quest: GeneratedQuest?, epic: GeneratedEpic?) {
+        let token = try await AuthService.shared.getAccessToken()
+
+        struct RequestBody: Encodable {
+            let messages: [[String: String]]
+            let mode: String
+        }
+
+        let body = RequestBody(
+            messages: messages.map { ["role": $0.role.rawValue, "content": $0.content] },
+            mode: mode
+        )
+
+        var request = URLRequest(url: URL(string: "\(Config.apiBaseURL)/api/quests/generate")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            let errorBody = try? JSONDecoder().decode([String: String].self, from: data)
+            throw APIError.serverError(errorBody?["error"] ?? "Failed to generate plan")
+        }
+
+        if mode == "quest" {
+            let result = try JSONDecoder().decode(GenerateQuestResponse.self, from: data)
+            return (quest: result.quest, epic: nil)
+        } else {
+            let result = try JSONDecoder().decode(GenerateEpicResponse.self, from: data)
+            return (quest: nil, epic: result.epic)
+        }
+    }
+
+    static func taskChat(messages: [ChatMessage], context: TaskChatContext) async throws -> String {
+        let token = try await AuthService.shared.getAccessToken()
+
+        struct RequestBody: Encodable {
+            let messages: [[String: String]]
+            let context: TaskChatContext
+        }
+
+        let body = RequestBody(
+            messages: messages.map { ["role": $0.role.rawValue, "content": $0.content] },
+            context: context
+        )
+
+        var request = URLRequest(url: URL(string: "\(Config.apiBaseURL)/api/quests/task-chat")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(body)
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            let errorBody = try? JSONDecoder().decode([String: String].self, from: data)
+            throw APIError.serverError(errorBody?["error"] ?? "Failed to get response")
+        }
+
+        let result = try JSONDecoder().decode(TaskChatResponse.self, from: data)
+        return result.message
+    }
+}
+
+struct TaskChatContext: Encodable, Sendable {
+    let taskTitle: String
+    let taskDescription: String?
+    let difficulty: String
+    let questName: String?
+    let questDescription: String?
+    let planSummary: String?
+}
+
+enum APIError: LocalizedError {
+    case serverError(String)
+
+    var errorDescription: String? {
+        switch self {
+        case .serverError(let message): message
+        }
+    }
+}
