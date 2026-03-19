@@ -41,6 +41,8 @@ export function TaskChatTooltip({
   const [notesExpanded, setNotesExpanded] = useState(false);
   const [showShoppingAds, setShowShoppingAds] = useState(false);
   const [shoppingDismissed, setShoppingDismissed] = useState(false);
+  const [notesSavedSinceLastChat, setNotesSavedSinceLastChat] = useState(false);
+  const [notesFlash, setNotesFlash] = useState(false);
 
   const isShopping = isShoppingTask(context.taskTitle, context.taskDescription);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -90,6 +92,7 @@ export function TaskChatTooltip({
       if (!res.ok) throw new Error(data.error ?? "Failed");
 
       setMessages((prev) => [...prev, { role: "assistant", content: data.message }]);
+      setNotesSavedSinceLastChat(false);
       scrollToBottom();
     } catch {
       setMessages((prev) => [
@@ -125,8 +128,12 @@ export function TaskChatTooltip({
 
       const newNotes = notes ? notes + "\n\n" + data.message : data.message;
       setNotes(newNotes);
+      await updateTaskNotes(taskId, newNotes);
       setSummarizing(false);
-      setEditingNotes(true);
+      setNotesSavedSinceLastChat(true);
+      setNotesExpanded(true);
+      setNotesFlash(true);
+      setTimeout(() => setNotesFlash(false), 1500);
     } catch {
       setSummarizing(false);
     }
@@ -204,7 +211,7 @@ export function TaskChatTooltip({
 
         {/* Saved notes display */}
         {notes && !editingNotes && (
-          <div className="border-b border-[var(--card-border)]">
+          <div className={`border-b border-[var(--card-border)] transition-colors duration-700 ${notesFlash ? "bg-emerald-500/20" : ""}`}>
             <button
               onClick={() => setNotesExpanded((e) => !e)}
               className="flex w-full items-center gap-2 px-4 py-2 sm:px-6 text-left transition-colors hover:bg-white/5"
@@ -404,7 +411,7 @@ export function TaskChatTooltip({
             <button
               type="button"
               onClick={handleSaveNotes}
-              disabled={messages.length === 0 || summarizing || sending}
+              disabled={messages.length === 0 || summarizing || sending || notesSavedSinceLastChat}
               onMouseEnter={() => setShowNotesTooltip(true)}
               onMouseLeave={() => setShowNotesTooltip(false)}
               className="w-full sm:w-auto rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-4 py-2 text-sm font-bold text-white transition-all hover:from-emerald-500 hover:to-teal-500 disabled:opacity-50"
