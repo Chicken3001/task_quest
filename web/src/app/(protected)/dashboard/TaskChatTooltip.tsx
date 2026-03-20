@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
+import Markdown from "react-markdown";
 import { updateTaskNotes } from "./actions";
 import { isShoppingTask, isShoppingDismissed, dismissShopping } from "@/lib/shopping";
 
@@ -259,8 +260,10 @@ export function TaskChatTooltip({
             </button>
             {notesExpanded && (
               <div className="px-4 pb-3 sm:px-6">
-                <div className="max-h-40 overflow-y-auto">
-                  <p className="text-sm text-violet-200 whitespace-pre-wrap">{notes}</p>
+                <div className="max-h-[50vh] overflow-y-auto">
+                  <div className="prose prose-sm prose-invert prose-violet max-w-none text-violet-200 [&_h1]:text-base [&_h1]:font-bold [&_h1]:text-white [&_h2]:text-sm [&_h2]:font-bold [&_h2]:text-white [&_h3]:text-sm [&_h3]:font-semibold [&_h3]:text-violet-200 [&_a]:text-violet-400 [&_a]:underline [&_hr]:border-white/10 [&_li]:text-violet-200 [&_strong]:text-white [&_code]:text-amber-300 [&_code]:bg-white/5 [&_code]:rounded [&_code]:px-1">
+                    <Markdown>{notes}</Markdown>
+                  </div>
                 </div>
                 <div className="mt-2 flex items-center gap-2 justify-end">
                   <button
