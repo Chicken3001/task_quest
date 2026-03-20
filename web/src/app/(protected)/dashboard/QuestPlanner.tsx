@@ -200,6 +200,11 @@ function PlannerModal({
         {error && (
           <div className="mx-6 mt-4 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
             {error}
+            {error.includes("limit reached") && (
+              <Link href="/account" className="ml-1 font-semibold text-violet-400 underline hover:text-violet-300">
+                Go to Settings
+              </Link>
+            )}
           </div>
         )}
 

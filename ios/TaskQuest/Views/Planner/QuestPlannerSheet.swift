@@ -67,13 +67,25 @@ struct QuestPlannerSheet: View {
                         }
 
                         if let error = viewModel.errorMessage {
-                            Text(error)
-                                .font(.caption)
-                                .foregroundStyle(.red)
-                                .padding(10)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                                .background(Color.red.opacity(0.1))
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text(error)
+                                    .font(.caption)
+                                    .foregroundStyle(.red)
+                                if error.contains("limit reached") {
+                                    Button {
+                                        dismiss()
+                                    } label: {
+                                        Text("Go to Settings")
+                                            .font(.caption.bold())
+                                            .foregroundStyle(Color.violet400)
+                                            .underline()
+                                    }
+                                }
+                            }
+                            .padding(10)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .background(Color.red.opacity(0.1))
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
                         }
 
                         // Suggested responses
