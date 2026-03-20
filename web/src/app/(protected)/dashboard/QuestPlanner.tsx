@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import Link from "next/link";
 import { createEpicWithQuestsAndTasks, createQuestWithTasks } from "./actions";
 import { createClient } from "@/lib/supabase/client";
 import { DIFFICULTY_COLORS, XP_REWARDS, TIME_ESTIMATES, type Difficulty } from "@/lib/xp";
@@ -71,7 +72,10 @@ function PlannerModal({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Chat failed");
+      if (!res.ok) {
+        setError(data.error ?? "Chat failed");
+        return;
+      }
 
       const aiMessage: ChatMessage = {
         role: "assistant",
@@ -116,7 +120,11 @@ function PlannerModal({
         }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error ?? "Generation failed");
+      if (!res.ok) {
+        setError(data.error ?? "Generation failed");
+        setStep("chat");
+        return;
+      }
 
       if (mode === "quest") {
         setQuest(data.quest);
@@ -257,6 +265,14 @@ function PlannerModal({
                 >
                   Include my personal info
                 </label>
+                {!hasPersonalInfo && (
+                  <Link
+                    href="/account"
+                    className="text-xs font-semibold text-violet-400 underline hover:text-violet-300"
+                  >
+                    Add in Settings
+                  </Link>
+                )}
                 <div
                   className="relative"
                   onMouseEnter={() => setShowInfoTooltip(true)}

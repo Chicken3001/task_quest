@@ -114,6 +114,17 @@ struct QuestPlannerSheet: View {
                     .font(.subheadline)
                     .foregroundStyle(viewModel.hasPersonalInfo ? Color.violet300 : Color.violet400.opacity(0.5))
 
+                if !viewModel.hasPersonalInfo {
+                    Button {
+                        dismiss()
+                    } label: {
+                        Text("Add in Account")
+                            .font(.caption.bold())
+                            .foregroundStyle(Color.violet400)
+                            .underline()
+                    }
+                }
+
                 Spacer()
 
                 Menu {
