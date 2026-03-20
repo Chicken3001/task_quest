@@ -14,6 +14,9 @@ struct AccountView: View {
     @State private var dailyUsage = 0
     @State private var dailyLimit = 15
     @State private var researchCredits = 3
+    @State private var personalInfo = ""
+    @State private var savingPersonalInfo = false
+    @State private var personalInfoMessage: (type: String, text: String)?
     @State private var apiKeyInput = ""
     @State private var savingApiKey = false
     @State private var apiKeyMessage: (type: String, text: String)?
@@ -78,6 +81,47 @@ struct AccountView: View {
                             .background(Color.violet600)
                             .clipShape(RoundedRectangle(cornerRadius: 12))
                             .disabled(savingUsername)
+                        }
+                        .cardStyle()
+
+                        // Personal Info section
+                        VStack(alignment: .leading, spacing: 16) {
+                            Text("Personal Info")
+                                .font(.headline.bold())
+                                .foregroundStyle(.white)
+
+                            Text("Describe your skills, preferences, and goals. The AI planner can use this to tailor quests to your background.")
+                                .font(.caption)
+                                .foregroundStyle(Color.violet400)
+
+                            VStack(alignment: .leading, spacing: 6) {
+                                TextField("e.g. I'm a beginner web developer learning React...", text: $personalInfo, axis: .vertical)
+                                    .textFieldStyle(QuestTextFieldStyle())
+                                    .lineLimit(3...8)
+                            }
+
+                            if let msg = personalInfoMessage {
+                                Text(msg.text)
+                                    .font(.caption.bold())
+                                    .foregroundStyle(msg.type == "success" ? .green : .red)
+                            }
+
+                            Button {
+                                Task { await savePersonalInfo() }
+                            } label: {
+                                if savingPersonalInfo {
+                                    ProgressView().tint(.white)
+                                } else {
+                                    Text("Save Personal Info")
+                                }
+                            }
+                            .font(.subheadline.bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 20)
+                            .padding(.vertical, 12)
+                            .background(Color.violet600)
+                            .clipShape(RoundedRectangle(cornerRadius: 12))
+                            .disabled(savingPersonalInfo)
                         }
                         .cardStyle()
 
@@ -323,10 +367,23 @@ struct AccountView: View {
             return DataService.shared.profile
         }()
         username = profile?.username ?? ""
+        personalInfo = profile?.personalInfo ?? ""
         if let session = try? await SupabaseService.client.auth.session {
             email = session.user.email ?? ""
         }
         isLoading = false
+    }
+
+    private func savePersonalInfo() async {
+        savingPersonalInfo = true
+        personalInfoMessage = nil
+        do {
+            try await DataService.shared.updatePersonalInfo(personalInfo.isEmpty ? nil : personalInfo)
+            personalInfoMessage = ("success", "Personal info saved")
+        } catch {
+            personalInfoMessage = ("error", error.localizedDescription)
+        }
+        savingPersonalInfo = false
     }
 
     private func updateUsername() async {

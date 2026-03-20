@@ -456,6 +456,21 @@ final class DataService: @unchecked Sendable {
         await fetchAll()
     }
 
+    func updatePersonalInfo(_ text: String?) async throws {
+        guard let userId = AuthService.shared.currentUserId else { throw AuthError.notAuthenticated }
+
+        struct Update: Encodable {
+            let personal_info: String?
+        }
+
+        try await client.from("task_quest_profiles")
+            .update(Update(personal_info: text))
+            .eq("id", value: userId)
+            .execute()
+
+        await fetchAll()
+    }
+
     func updateUsername(_ username: String) async throws {
         guard let userId = AuthService.shared.currentUserId else { throw AuthError.notAuthenticated }
 

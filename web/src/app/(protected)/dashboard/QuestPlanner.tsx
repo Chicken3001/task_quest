@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createEpicWithQuestsAndTasks, createQuestWithTasks } from "./actions";
+import { createClient } from "@/lib/supabase/client";
 import { DIFFICULTY_COLORS, XP_REWARDS, TIME_ESTIMATES, type Difficulty } from "@/lib/xp";
 import type { ChatMessage, GeneratedEpic, GeneratedQuest } from "@/lib/types";
 
@@ -24,6 +25,9 @@ function PlannerModal({
   const [error, setError] = useState<string | null>(null);
   const [epic, setEpic] = useState<GeneratedEpic | null>(null);
   const [quest, setQuest] = useState<GeneratedQuest | null>(null);
+  const [includePersonalInfo, setIncludePersonalInfo] = useState(false);
+  const [hasPersonalInfo, setHasPersonalInfo] = useState(false);
+  const [showInfoTooltip, setShowInfoTooltip] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
 
@@ -38,6 +42,21 @@ function PlannerModal({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    async function checkPersonalInfo() {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { data } = await supabase
+        .from("task_quest_profiles")
+        .select("personal_info")
+        .eq("id", user.id)
+        .single();
+      setHasPersonalInfo(!!data?.personal_info);
+    }
+    checkPersonalInfo();
+  }, []);
+
   async function sendToChat(msgs: ChatMessage[]) {
     setSending(true);
     setError(null);
@@ -48,6 +67,7 @@ function PlannerModal({
         body: JSON.stringify({
           messages: msgs.map((m) => ({ role: m.role, content: m.content })),
           mode,
+          includePersonalInfo,
         }),
       });
       const data = await res.json();
@@ -92,6 +112,7 @@ function PlannerModal({
         body: JSON.stringify({
           messages: messages.map((m) => ({ role: m.role, content: m.content })),
           mode,
+          includePersonalInfo,
         }),
       });
       const data = await res.json();
@@ -221,6 +242,36 @@ function PlannerModal({
             </div>
 
             <div className="flex-shrink-0 border-t border-[var(--card-border)] px-4 py-3 sm:px-6 sm:py-4">
+              <div className="mb-3 flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="include-personal-info"
+                  checked={includePersonalInfo}
+                  disabled={!hasPersonalInfo}
+                  onChange={(e) => setIncludePersonalInfo(e.target.checked)}
+                  className="h-4 w-4 rounded border-white/20 bg-white/5 text-violet-600 accent-violet-600 disabled:opacity-40"
+                />
+                <label
+                  htmlFor="include-personal-info"
+                  className={`text-sm font-medium ${hasPersonalInfo ? "text-violet-300" : "text-violet-400/50"}`}
+                >
+                  Include my personal info
+                </label>
+                <div
+                  className="relative"
+                  onMouseEnter={() => setShowInfoTooltip(true)}
+                  onMouseLeave={() => setShowInfoTooltip(false)}
+                >
+                  <span className={`cursor-help text-xs font-bold ${hasPersonalInfo ? "text-violet-400" : "text-violet-400/40"}`}>?</span>
+                  {showInfoTooltip && (
+                    <div className="absolute bottom-full left-1/2 z-10 mb-2 w-56 -translate-x-1/2 rounded-lg border border-[var(--card-border)] bg-[var(--card-bg)] px-3 py-2 text-xs text-violet-300 shadow-xl">
+                      {hasPersonalInfo
+                        ? "Sends your personal info (skills, preferences, goals) as context for better AI planning. Edit in Account Settings."
+                        : "Add personal info in Account Settings to enable this."}
+                    </div>
+                  )}
+                </div>
+              </div>
               {readyToGenerate && (
                 <button
                   onClick={handleGenerate}

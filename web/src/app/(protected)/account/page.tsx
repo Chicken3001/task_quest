@@ -18,6 +18,9 @@ export default function AccountPage() {
   const [dailyUsage, setDailyUsage] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(15);
   const [researchCredits, setResearchCredits] = useState(3);
+  const [personalInfo, setPersonalInfo] = useState("");
+  const [savingPersonalInfo, setSavingPersonalInfo] = useState(false);
+  const [personalInfoMsg, setPersonalInfoMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [savingApiKey, setSavingApiKey] = useState(false);
   const [apiKeyMsg, setApiKeyMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -35,11 +38,12 @@ export default function AccountPage() {
 
       const { data: profile } = await supabase
         .from("task_quest_profiles")
-        .select("username")
+        .select("username, personal_info")
         .eq("id", user.id)
         .single();
 
       setUsername(profile?.username ?? "");
+      setPersonalInfo(profile?.personal_info ?? "");
 
       // Fetch AI settings
       try {
@@ -127,6 +131,28 @@ export default function AccountPage() {
       setPasswordMsg({ type: "success", text: "Password updated" });
       setNewPassword("");
       setConfirmPassword("");
+    }
+  }
+
+  async function handleSavePersonalInfo(e: React.FormEvent) {
+    e.preventDefault();
+    setSavingPersonalInfo(true);
+    setPersonalInfoMsg(null);
+
+    const supabase = createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { error } = await supabase
+      .from("task_quest_profiles")
+      .update({ personal_info: personalInfo || null })
+      .eq("id", user.id);
+
+    setSavingPersonalInfo(false);
+    if (error) {
+      setPersonalInfoMsg({ type: "error", text: "Failed to save personal info" });
+    } else {
+      setPersonalInfoMsg({ type: "success", text: "Personal info saved" });
     }
   }
 
@@ -218,6 +244,37 @@ export default function AccountPage() {
             className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:opacity-50"
           >
             {savingUsername ? "Saving..." : "Update Username"}
+          </button>
+        </form>
+      </div>
+
+      {/* Personal Info */}
+      <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6">
+        <h2 className="mb-1 text-lg font-bold text-white">Personal Info</h2>
+        <p className="mb-4 text-sm text-violet-400">
+          Describe your skills, preferences, and goals. The AI planner can use this to tailor quests to your background.
+        </p>
+        <form onSubmit={handleSavePersonalInfo} className="space-y-3">
+          <div>
+            <textarea
+              value={personalInfo}
+              onChange={(e) => setPersonalInfo(e.target.value)}
+              rows={5}
+              placeholder="e.g. I'm a beginner web developer learning React. I prefer hands-on projects and short focused tasks..."
+              className="w-full resize-none rounded-xl border border-[var(--card-border)] bg-white/5 px-4 py-2.5 text-sm text-white placeholder-violet-400/50 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+            />
+          </div>
+          {personalInfoMsg && (
+            <p className={`text-sm font-medium ${personalInfoMsg.type === "success" ? "text-emerald-400" : "text-red-400"}`}>
+              {personalInfoMsg.text}
+            </p>
+          )}
+          <button
+            type="submit"
+            disabled={savingPersonalInfo}
+            className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:opacity-50"
+          >
+            {savingPersonalInfo ? "Saving..." : "Save Personal Info"}
           </button>
         </form>
       </div>

@@ -3,6 +3,7 @@ import Foundation
 struct Profile: Codable, Identifiable, Sendable {
     let id: String
     var username: String
+    var personalInfo: String?
     var xp: Int
     var level: Int
     var currentStreak: Int
@@ -12,6 +13,7 @@ struct Profile: Codable, Identifiable, Sendable {
 
     enum CodingKeys: String, CodingKey {
         case id, username, xp, level
+        case personalInfo = "personal_info"
         case currentStreak = "current_streak"
         case longestStreak = "longest_streak"
         case lastCompletedDate = "last_completed_date"

@@ -56,9 +56,20 @@ export async function POST(req: NextRequest) {
   }
   const apiKey = keyResult.apiKey;
 
-  const { messages, mode = "epic" } = await req.json();
+  const { messages, mode = "epic", includePersonalInfo = false } = await req.json();
 
-  const systemPrompt = mode === "quest" ? QUEST_CHAT_PROMPT : EPIC_CHAT_PROMPT;
+  let systemPrompt = mode === "quest" ? QUEST_CHAT_PROMPT : EPIC_CHAT_PROMPT;
+
+  if (includePersonalInfo) {
+    const { data: profile } = await auth.supabase
+      .from("task_quest_profiles")
+      .select("personal_info")
+      .eq("id", auth.user.id)
+      .single();
+    if (profile?.personal_info) {
+      systemPrompt += `\n\nThe user has shared the following personal context. Use this to tailor your planning to their background:\n---\n${profile.personal_info}\n---`;
+    }
+  }
 
   // Map messages to Gemini format
   const contents = (

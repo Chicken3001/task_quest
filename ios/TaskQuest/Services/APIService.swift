@@ -1,17 +1,19 @@
 import Foundation
 
 enum APIService {
-    static func chatWithPlanner(messages: [ChatMessage], mode: String) async throws -> ChatResponse {
+    static func chatWithPlanner(messages: [ChatMessage], mode: String, includePersonalInfo: Bool = false) async throws -> ChatResponse {
         let token = try await AuthService.shared.getAccessToken()
 
         struct RequestBody: Encodable {
             let messages: [[String: String]]
             let mode: String
+            let includePersonalInfo: Bool
         }
 
         let body = RequestBody(
             messages: messages.map { ["role": $0.role.rawValue, "content": $0.content] },
-            mode: mode
+            mode: mode,
+            includePersonalInfo: includePersonalInfo
         )
 
         var request = URLRequest(url: URL(string: "\(Config.apiBaseURL)/api/quests/chat")!)
@@ -30,17 +32,19 @@ enum APIService {
         return try JSONDecoder().decode(ChatResponse.self, from: data)
     }
 
-    static func generatePlan(messages: [ChatMessage], mode: String) async throws -> (quest: GeneratedQuest?, epic: GeneratedEpic?) {
+    static func generatePlan(messages: [ChatMessage], mode: String, includePersonalInfo: Bool = false) async throws -> (quest: GeneratedQuest?, epic: GeneratedEpic?) {
         let token = try await AuthService.shared.getAccessToken()
 
         struct RequestBody: Encodable {
             let messages: [[String: String]]
             let mode: String
+            let includePersonalInfo: Bool
         }
 
         let body = RequestBody(
             messages: messages.map { ["role": $0.role.rawValue, "content": $0.content] },
-            mode: mode
+            mode: mode,
+            includePersonalInfo: includePersonalInfo
         )
 
         var request = URLRequest(url: URL(string: "\(Config.apiBaseURL)/api/quests/generate")!)

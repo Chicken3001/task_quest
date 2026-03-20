@@ -43,6 +43,7 @@ struct QuestPlannerSheet: View {
                 }
             }
             .task {
+                await viewModel.checkPersonalInfo()
                 await viewModel.startConversation()
             }
         }
@@ -95,6 +96,38 @@ struct QuestPlannerSheet: View {
                     }
                 }
             }
+
+            // Personal info checkbox
+            HStack(spacing: 8) {
+                Button {
+                    if viewModel.hasPersonalInfo {
+                        viewModel.includePersonalInfo.toggle()
+                    }
+                } label: {
+                    Image(systemName: viewModel.includePersonalInfo ? "checkmark.square.fill" : "square")
+                        .foregroundStyle(viewModel.hasPersonalInfo ? Color.violet500 : Color.violet500.opacity(0.3))
+                        .font(.title3)
+                }
+                .disabled(!viewModel.hasPersonalInfo)
+
+                Text("Include my personal info")
+                    .font(.subheadline)
+                    .foregroundStyle(viewModel.hasPersonalInfo ? Color.violet300 : Color.violet400.opacity(0.5))
+
+                Spacer()
+
+                Menu {
+                    Text(viewModel.hasPersonalInfo
+                         ? "Sends your personal info (skills, preferences, goals) as context for better AI planning. Edit in Account Settings."
+                         : "Add personal info in Account Settings to enable this.")
+                } label: {
+                    Image(systemName: "questionmark.circle")
+                        .font(.subheadline)
+                        .foregroundStyle(viewModel.hasPersonalInfo ? Color.violet400 : Color.violet400.opacity(0.4))
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 6)
 
             // Generate button
             if viewModel.readyToGenerate {
