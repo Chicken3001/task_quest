@@ -14,6 +14,12 @@ export default function AccountPage() {
   const [savingPassword, setSavingPassword] = useState(false);
   const [usernameMsg, setUsernameMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const [passwordMsg, setPasswordMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [hasApiKey, setHasApiKey] = useState(false);
+  const [dailyUsage, setDailyUsage] = useState(0);
+  const [dailyLimit, setDailyLimit] = useState(15);
+  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [savingApiKey, setSavingApiKey] = useState(false);
+  const [apiKeyMsg, setApiKeyMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -33,6 +39,18 @@ export default function AccountPage() {
         .single();
 
       setUsername(profile?.username ?? "");
+
+      // Fetch AI settings
+      try {
+        const aiRes = await fetch("/api/ai-settings");
+        if (aiRes.ok) {
+          const ai = await aiRes.json();
+          setHasApiKey(ai.hasApiKey);
+          setDailyUsage(ai.dailyUsage);
+          setDailyLimit(ai.dailyLimit);
+        }
+      } catch { /* ignore */ }
+
       setLoading(false);
     }
     load();
@@ -110,6 +128,49 @@ export default function AccountPage() {
     }
   }
 
+  async function handleSaveApiKey(e: React.FormEvent) {
+    e.preventDefault();
+    if (!apiKeyInput.trim()) return;
+    setSavingApiKey(true);
+    setApiKeyMsg(null);
+
+    try {
+      const res = await fetch("/api/ai-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ geminiApiKey: apiKeyInput.trim() }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setApiKeyMsg({ type: "error", text: data.error });
+      } else {
+        setHasApiKey(true);
+        setApiKeyInput("");
+        setApiKeyMsg({ type: "success", text: "API key saved and validated" });
+      }
+    } catch {
+      setApiKeyMsg({ type: "error", text: "Failed to save API key" });
+    }
+    setSavingApiKey(false);
+  }
+
+  async function handleRemoveApiKey() {
+    setSavingApiKey(true);
+    setApiKeyMsg(null);
+    try {
+      await fetch("/api/ai-settings", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ geminiApiKey: null }),
+      });
+      setHasApiKey(false);
+      setApiKeyMsg({ type: "success", text: "API key removed" });
+    } catch {
+      setApiKeyMsg({ type: "error", text: "Failed to remove API key" });
+    }
+    setSavingApiKey(false);
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -157,6 +218,77 @@ export default function AccountPage() {
             {savingUsername ? "Saving..." : "Update Username"}
           </button>
         </form>
+      </div>
+
+      {/* AI Settings */}
+      <div className="rounded-2xl border border-[var(--card-border)] bg-[var(--card-bg)] p-6">
+        <h2 className="mb-4 text-lg font-bold text-white">AI Settings</h2>
+
+        <div className="mb-4">
+          <label className="mb-1 block text-xs font-semibold text-violet-400">Daily Usage</label>
+          {hasApiKey ? (
+            <p className="text-sm text-emerald-400 font-medium">Unlimited (using your key)</p>
+          ) : (
+            <div>
+              <div className="flex items-center justify-between mb-1">
+                <span className="text-sm text-violet-300">{dailyUsage} / {dailyLimit} requests today</span>
+              </div>
+              <div className="h-2 rounded-full bg-white/10 overflow-hidden">
+                <div
+                  className="h-full rounded-full bg-violet-500 transition-all"
+                  style={{ width: `${Math.min((dailyUsage / dailyLimit) * 100, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {hasApiKey ? (
+          <div className="space-y-3">
+            <p className="text-sm text-emerald-400 font-medium">API key saved</p>
+            <button
+              onClick={handleRemoveApiKey}
+              disabled={savingApiKey}
+              className="rounded-xl bg-red-600/20 border border-red-500/30 px-4 py-2.5 text-sm font-bold text-red-400 transition-all hover:bg-red-600/30 disabled:opacity-50"
+            >
+              {savingApiKey ? "Removing..." : "Remove Key"}
+            </button>
+          </div>
+        ) : (
+          <form onSubmit={handleSaveApiKey} className="space-y-3">
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-violet-400">Gemini API Key</label>
+              <input
+                type="password"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="Paste your API key"
+                className="w-full rounded-xl border border-[var(--card-border)] bg-white/5 px-4 py-2.5 text-sm text-white placeholder-violet-400/50 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={savingApiKey || !apiKeyInput.trim()}
+              className="rounded-xl bg-violet-600 px-4 py-2.5 text-sm font-bold text-white transition-all hover:bg-violet-500 disabled:opacity-50"
+            >
+              {savingApiKey ? "Validating..." : "Save Key"}
+            </button>
+          </form>
+        )}
+
+        {apiKeyMsg && (
+          <p className={`mt-3 text-sm font-medium ${apiKeyMsg.type === "success" ? "text-emerald-400" : "text-red-400"}`}>
+            {apiKeyMsg.text}
+          </p>
+        )}
+
+        <p className="mt-4 text-xs text-violet-400/70">
+          Get a free API key from{" "}
+          <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener noreferrer" className="text-violet-400 underline hover:text-violet-300">
+            Google AI Studio
+          </a>{" "}
+          for unlimited AI requests.
+        </p>
       </div>
 
       {/* Password */}

@@ -94,6 +94,50 @@ enum APIService {
         let result = try JSONDecoder().decode(TaskChatResponse.self, from: data)
         return result.message
     }
+
+    static func getAISettings() async throws -> AISettingsResponse {
+        let token = try await AuthService.shared.getAccessToken()
+
+        var request = URLRequest(url: URL(string: "\(Config.apiBaseURL)/api/ai-settings")!)
+        request.httpMethod = "GET"
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            let errorBody = try? JSONDecoder().decode([String: String].self, from: data)
+            throw APIError.serverError(errorBody?["error"] ?? "Failed to load AI settings")
+        }
+
+        return try JSONDecoder().decode(AISettingsResponse.self, from: data)
+    }
+
+    static func updateAPIKey(_ key: String?) async throws {
+        let token = try await AuthService.shared.getAccessToken()
+
+        struct RequestBody: Encodable {
+            let geminiApiKey: String?
+        }
+
+        var request = URLRequest(url: URL(string: "\(Config.apiBaseURL)/api/ai-settings")!)
+        request.httpMethod = "PATCH"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(RequestBody(geminiApiKey: key))
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            let errorBody = try? JSONDecoder().decode([String: String].self, from: data)
+            throw APIError.serverError(errorBody?["error"] ?? "Failed to update API key")
+        }
+    }
+}
+
+struct AISettingsResponse: Codable, Sendable {
+    let hasApiKey: Bool
+    let dailyUsage: Int
+    let dailyLimit: Int
 }
 
 struct TaskChatContext: Encodable, Sendable {

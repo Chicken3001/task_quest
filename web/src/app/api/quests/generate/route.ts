@@ -1,6 +1,6 @@
 import { authenticateRequest } from "@/lib/supabase/api-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { GEMINI_URL } from "@/lib/gemini";
+import { GEMINI_URL, resolveGeminiKey, FREE_TIER_DAILY_LIMIT } from "@/lib/gemini";
 
 const EPIC_PROMPT = `You are a project planning assistant. Based on the conversation history, generate a structured project breakdown.
 
@@ -77,9 +77,20 @@ export async function POST(req: NextRequest) {
   const auth = await authenticateRequest(req);
   if (!auth) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey)
-    return NextResponse.json({ error: "GEMINI_API_KEY not configured" }, { status: 500 });
+  const keyResult = await resolveGeminiKey(auth.supabase, auth.user.id);
+  if ("error" in keyResult) {
+    if (keyResult.error === "cooldown") {
+      return NextResponse.json(
+        { error: `Please wait ${keyResult.retryAfter} seconds between requests.`, code: "COOLDOWN" },
+        { status: 429 }
+      );
+    }
+    return NextResponse.json(
+      { error: `Daily AI limit reached (${FREE_TIER_DAILY_LIMIT} requests). Add your own API key in Settings for unlimited usage.`, code: "RATE_LIMITED" },
+      { status: 429 }
+    );
+  }
+  const apiKey = keyResult.apiKey;
 
   const { messages, mode = "epic" } = await req.json();
   if (!Array.isArray(messages) || messages.length === 0) {
@@ -116,6 +127,15 @@ export async function POST(req: NextRequest) {
   if (!geminiRes.ok) {
     const err = await geminiRes.text();
     console.error("Gemini generate error:", err);
+    if (keyResult.isUserKey) {
+      const status = geminiRes.status;
+      if (status === 400 || status === 403) {
+        return NextResponse.json({ error: "Your API key appears to be invalid or disabled. Check your key in Settings.", code: "INVALID_USER_KEY" }, { status: 502 });
+      }
+      if (status === 429) {
+        return NextResponse.json({ error: "Your API key has been rate-limited by Google. Wait a moment and try again.", code: "USER_KEY_RATE_LIMITED" }, { status: 502 });
+      }
+    }
     return NextResponse.json({ error: "Failed to generate plan. Please try again." }, { status: 502 });
   }
 
