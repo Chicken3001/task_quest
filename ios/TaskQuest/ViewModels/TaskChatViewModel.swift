@@ -9,6 +9,9 @@ final class TaskChatViewModel {
     var errorMessage: String?
     var notes: String = ""
     var isSavingNotes = false
+    var isResearching = false
+    var researchCredits: Int?
+    var researchError: String?
 
     let task: TaskItem
     let quest: Quest?
@@ -55,6 +58,27 @@ final class TaskChatViewModel {
             errorMessage = error.localizedDescription
         }
         isSavingNotes = false
+    }
+
+    func loadCredits() async {
+        do {
+            let settings = try await APIService.getAISettings()
+            researchCredits = settings.researchCredits ?? 3
+        } catch { /* ignore */ }
+    }
+
+    func researchTask() async {
+        isResearching = true
+        researchError = nil
+        do {
+            let response = try await APIService.researchTask(taskId: task.id, context: context)
+            notes = notes.isEmpty ? response.result : "\(notes)\n\n---\n\n\(response.result)"
+            researchCredits = response.creditsRemaining
+            try await DataService.shared.updateTaskNotes(task.id, notes: notes)
+        } catch {
+            researchError = error.localizedDescription
+        }
+        isResearching = false
     }
 
     func summarizeAndSave() async {

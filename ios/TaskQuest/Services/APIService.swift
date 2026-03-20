@@ -95,6 +95,33 @@ enum APIService {
         return result.message
     }
 
+    static func researchTask(taskId: String, context: TaskChatContext) async throws -> ResearchResponse {
+        let token = try await AuthService.shared.getAccessToken()
+
+        struct RequestBody: Encodable {
+            let taskId: String
+            let context: TaskChatContext
+        }
+
+        let body = RequestBody(taskId: taskId, context: context)
+
+        var request = URLRequest(url: URL(string: "\(Config.apiBaseURL)/api/quests/research")!)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        request.setValue("Bearer \(token)", forHTTPHeaderField: "Authorization")
+        request.httpBody = try JSONEncoder().encode(body)
+        request.timeoutInterval = 60
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 else {
+            let errorBody = try? JSONDecoder().decode([String: String].self, from: data)
+            throw APIError.serverError(errorBody?["error"] ?? "Research failed")
+        }
+
+        return try JSONDecoder().decode(ResearchResponse.self, from: data)
+    }
+
     static func getAISettings() async throws -> AISettingsResponse {
         let token = try await AuthService.shared.getAccessToken()
 
@@ -138,6 +165,12 @@ struct AISettingsResponse: Codable, Sendable {
     let hasApiKey: Bool
     let dailyUsage: Int
     let dailyLimit: Int
+    let researchCredits: Int?
+}
+
+struct ResearchResponse: Codable, Sendable {
+    let result: String
+    let creditsRemaining: Int
 }
 
 struct TaskChatContext: Encodable, Sendable {

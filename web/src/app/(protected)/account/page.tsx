@@ -17,6 +17,7 @@ export default function AccountPage() {
   const [hasApiKey, setHasApiKey] = useState(false);
   const [dailyUsage, setDailyUsage] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(15);
+  const [researchCredits, setResearchCredits] = useState(3);
   const [apiKeyInput, setApiKeyInput] = useState("");
   const [savingApiKey, setSavingApiKey] = useState(false);
   const [apiKeyMsg, setApiKeyMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -48,6 +49,7 @@ export default function AccountPage() {
           setHasApiKey(ai.hasApiKey);
           setDailyUsage(ai.dailyUsage);
           setDailyLimit(ai.dailyLimit);
+          setResearchCredits(ai.researchCredits ?? 3);
         }
       } catch { /* ignore */ }
 
@@ -241,6 +243,14 @@ export default function AccountPage() {
               </div>
             </div>
           )}
+        </div>
+
+        <div className="mb-4">
+          <label className="mb-1 block text-xs font-semibold text-violet-400">Research Credits</label>
+          <div className="flex items-center gap-2">
+            <span className="text-sm text-amber-400 font-medium">{researchCredits} remaining</span>
+            <span className="text-xs text-violet-400/60">Web-powered deep research on tasks</span>
+          </div>
         </div>
 
         {hasApiKey ? (

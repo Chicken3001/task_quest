@@ -1,6 +1,6 @@
 import { authenticateRequest } from "@/lib/supabase/api-auth";
 import { NextRequest, NextResponse } from "next/server";
-import { FREE_TIER_DAILY_LIMIT, GEMINI_URL } from "@/lib/gemini";
+import { FREE_TIER_DAILY_LIMIT, DEFAULT_RESEARCH_CREDITS, GEMINI_URL } from "@/lib/gemini";
 
 export async function GET(req: NextRequest) {
   const auth = await authenticateRequest(req);
@@ -8,7 +8,7 @@ export async function GET(req: NextRequest) {
 
   const { data: settings } = await auth.supabase
     .from("task_quest_ai_settings")
-    .select("gemini_api_key, daily_request_count, last_request_date")
+    .select("gemini_api_key, daily_request_count, last_request_date, research_credits")
     .eq("id", auth.user.id)
     .single();
 
@@ -22,6 +22,7 @@ export async function GET(req: NextRequest) {
     hasApiKey: !!settings?.gemini_api_key,
     dailyUsage,
     dailyLimit: FREE_TIER_DAILY_LIMIT,
+    researchCredits: settings?.research_credits ?? DEFAULT_RESEARCH_CREDITS,
   });
 }
 

@@ -43,6 +43,9 @@ export function TaskChatTooltip({
   const [shoppingDismissed, setShoppingDismissed] = useState(false);
   const [notesSavedSinceLastChat, setNotesSavedSinceLastChat] = useState(false);
   const [notesFlash, setNotesFlash] = useState(false);
+  const [researching, setResearching] = useState(false);
+  const [researchCredits, setResearchCredits] = useState<number | null>(null);
+  const [researchError, setResearchError] = useState<string | null>(null);
 
   const isShopping = isShoppingTask(context.taskTitle, context.taskDescription);
   const inputRef = useRef<HTMLTextAreaElement>(null);
@@ -55,6 +58,11 @@ export function TaskChatTooltip({
       if (isShopping) {
         setShoppingDismissed(isShoppingDismissed(taskId));
       }
+      // Fetch research credits
+      fetch("/api/ai-settings")
+        .then((r) => r.json())
+        .then((d) => setResearchCredits(d.researchCredits ?? 0))
+        .catch(() => {});
     }
   }, [open, isShopping, taskId]);
 
@@ -173,6 +181,31 @@ export function TaskChatTooltip({
       setEditingNotes(false);
     } finally {
       setSavingNotes(false);
+    }
+  }
+
+  async function handleResearch() {
+    if (researching) return;
+    setResearching(true);
+    setResearchError(null);
+    try {
+      const res = await fetch("/api/quests/research", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ taskId, context }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Research failed");
+
+      setNotes(notes ? notes + "\n\n---\n\n" + data.result : data.result);
+      setResearchCredits(data.creditsRemaining);
+      setNotesExpanded(true);
+      setNotesFlash(true);
+      setTimeout(() => setNotesFlash(false), 1500);
+    } catch (e) {
+      setResearchError(e instanceof Error ? e.message : "Research failed");
+    } finally {
+      setResearching(false);
     }
   }
 
@@ -344,6 +377,31 @@ export function TaskChatTooltip({
             </p>
           </div>
         )}
+
+        {/* Research banner */}
+        <div className="flex-shrink-0 border-b border-[var(--card-border)] px-4 py-2.5 sm:px-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-amber-400">Research</p>
+              <p className="text-xs text-amber-500/70">AI searches the web and writes a detailed guide with sources</p>
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              {researchCredits !== null && (
+                <span className="text-xs font-medium text-amber-500/70">{researchCredits} left</span>
+              )}
+              <button
+                onClick={handleResearch}
+                disabled={researching || researchCredits === 0}
+                className="rounded-lg bg-gradient-to-r from-amber-600 to-orange-600 px-3 py-1.5 text-xs font-bold text-white transition-all hover:from-amber-500 hover:to-orange-500 disabled:opacity-50"
+              >
+                {researching ? "Researching..." : "Research"}
+              </button>
+            </div>
+          </div>
+          {researchError && (
+            <p className="mt-1 text-xs text-red-400">{researchError}</p>
+          )}
+        </div>
 
         {/* Messages */}
         <div className="flex-1 min-h-0 overflow-y-auto px-4 py-4 sm:px-6 space-y-4">

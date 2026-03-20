@@ -1,10 +1,13 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 
 const GEMINI_MODEL = "gemini-3-flash-preview";
+const GEMINI_PRO_MODEL = "gemini-2.5-pro";
 
 export const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
+export const GEMINI_PRO_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_PRO_MODEL}:generateContent`;
 
 export const FREE_TIER_DAILY_LIMIT = 15;
+export const DEFAULT_RESEARCH_CREDITS = 3;
 const COOLDOWN_SECONDS = 4;
 
 export type GeminiKeyResult =

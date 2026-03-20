@@ -50,6 +50,7 @@ struct TaskChatSheet: View {
 
                 if selectedTab == 0 {
                     chatTab
+                        .task { await viewModel.loadCredits() }
                 } else {
                     notesTab
                 }
@@ -71,6 +72,54 @@ struct TaskChatSheet: View {
 
     private var chatTab: some View {
         VStack(spacing: 0) {
+            // Research section
+            VStack(spacing: 6) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Research")
+                            .font(.caption.bold())
+                            .foregroundStyle(Color.orange)
+                        Text("AI searches the web and writes a detailed guide")
+                            .font(.caption2)
+                            .foregroundStyle(Color.orange.opacity(0.7))
+                    }
+                    Spacer()
+                    if let credits = viewModel.researchCredits {
+                        Text("\(credits) left")
+                            .font(.caption2)
+                            .foregroundStyle(Color.orange.opacity(0.7))
+                    }
+                    Button {
+                        Task {
+                            await viewModel.researchTask()
+                            if viewModel.researchError == nil {
+                                selectedTab = 1
+                            }
+                        }
+                    } label: {
+                        Text(viewModel.isResearching ? "Researching..." : "Research")
+                            .font(.caption.bold())
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 8)
+                            .background(
+                                LinearGradient(colors: [Color.orange, Color.orange.opacity(0.8)], startPoint: .leading, endPoint: .trailing)
+                            )
+                            .clipShape(Capsule())
+                    }
+                    .disabled(viewModel.isResearching || viewModel.researchCredits == 0)
+                }
+
+                if let error = viewModel.researchError {
+                    Text(error)
+                        .font(.caption2)
+                        .foregroundStyle(.red)
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(Color.cardBg)
+
             ScrollViewReader { proxy in
                 ScrollView {
                     LazyVStack(spacing: 12) {

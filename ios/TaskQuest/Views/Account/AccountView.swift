@@ -13,6 +13,7 @@ struct AccountView: View {
     @State private var hasApiKey = false
     @State private var dailyUsage = 0
     @State private var dailyLimit = 15
+    @State private var researchCredits = 3
     @State private var apiKeyInput = ""
     @State private var savingApiKey = false
     @State private var apiKeyMessage: (type: String, text: String)?
@@ -110,6 +111,21 @@ struct AccountView: View {
                                         }
                                     }
                                     .frame(height: 8)
+                                }
+                            }
+
+                            // Research credits
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Research Credits")
+                                    .font(.caption.bold())
+                                    .foregroundStyle(Color.violet400)
+                                HStack(spacing: 6) {
+                                    Text("\(researchCredits) remaining")
+                                        .font(.subheadline.bold())
+                                        .foregroundStyle(.orange)
+                                    Text("Web-powered deep research")
+                                        .font(.caption2)
+                                        .foregroundStyle(Color.violet400.opacity(0.7))
                                 }
                             }
 
@@ -268,6 +284,7 @@ struct AccountView: View {
             hasApiKey = settings.hasApiKey
             dailyUsage = settings.dailyUsage
             dailyLimit = settings.dailyLimit
+            researchCredits = settings.researchCredits ?? 3
         } catch { /* ignore */ }
     }
 
